@@ -4,7 +4,6 @@ pragma solidity ^0.8.0;
 contract ToolReviewManager {
     address public owner;
 
-    // Basic structures
     struct Project {
         string creatorId;
         string creatorGithubProfile;
@@ -12,33 +11,39 @@ contract ToolReviewManager {
     }
 
     struct Social {
-        string socialType; // e.g. "instagram", "twitter"
-        string url;        // e.g. "https://instagram.com/xyz"
+        string socialType; // e.g., "instagram", "twitter"
+        string url;        // e.g., "https://instagram.com/xyz"
         Project[] projects;
     }
 
     struct Tool {
         uint256 id;
-        string image;             // URL or CID of the tool’s image
-        string repoLink;          // URL to code repository
-        string docsLink;          // URL to documentation
-        string[] keywords;        // keywords to filter tools
-        Social[] socials;         // social presence with associated projects
+        string image;              // URL or CID of the tool’s image
+        string repoLink;           // URL to code repository
+        string docsLink;           // URL to documentation
+        Social[] socials;          // Social presence with associated projects
+        Project[] projects;        // Projects associated with the tool
+        string[] keywords;         // Keywords for filtering tools
+        uint256 score;             // Average score for the tool
+        uint256 reviewCount;       // Number of reviews
         bool exists;
     }
 
     struct Review {
         address reviewer;
-        uint8 score;              // 1-10
+        uint8 score;               // 1-10
         string comment;
-        string[] reviewKeywords;  // optional keywords for the review
+        string projectLink;        // Project link from the reviewer
+        string[] reviewKeywords;   // Keywords associated with the review
     }
 
     // State variables
     uint256 public toolCount;
-    mapping(uint256 => Tool) public tools;           // toolId => Tool
+    uint256 public totalReviews;                   // Total number of reviews across all tools
+    mapping(uint256 => Tool) public tools;         // toolId => Tool
     mapping(uint256 => Review[]) public toolReviews; // toolId => array of reviews
-    mapping(address => bool) public verifiedUsers;   // track if a user is Aadhaar-verified
+    mapping(address => bool) public verifiedUsers; // track if a user is Aadhaar-verified
+    mapping(address => uint256[]) public userReviews; // track all reviews submitted by a user
 
     // Events
     event ToolAdded(uint256 toolId);
@@ -59,160 +64,152 @@ contract ToolReviewManager {
         _;
     }
 
-    /**
-     * @dev Owner adds a new tool to the system.
-     * @param _image The image link or CID.
-     * @param _repoLink The repository link for the tool.
-     * @param _docsLink The documentation link for the tool.
-     * @param _keywords The keywords for filtering this tool.
-     * param _socials Social links and associated projects (passed as encoded data or done in multiple calls for simplicity).
-     *
-     * For simplicity in this example, the socials and projects might need multiple transactions or a more complex input method.
-     * We will show a simple approach that allows adding socials separately.
-     */
-
+    // Add a new tool to the system
     function addTool(
         string memory _image,
         string memory _repoLink,
         string memory _docsLink,
-        string[] memory _keywords
+        Social[] memory _socials
     ) external onlyOwner returns (uint256) {
         toolCount++;
         uint256 newToolId = toolCount;
-        
+
         Tool storage t = tools[newToolId];
         t.id = newToolId;
         t.image = _image;
         t.repoLink = _repoLink;
         t.docsLink = _docsLink;
-        for (uint256 i = 0; i < _keywords.length; i++) {
-            t.keywords.push(_keywords[i]);
+
+        for (uint256 i = 0; i < _socials.length; i++) {
+            t.socials.push(_socials[i]);
         }
+
+        t.projects = new Project Initialize projects as an empty array
+        t.keywords = new string ; // Initialize keywords as empty
+        t.score = 0;                 // Default score is 0
+        t.reviewCount = 0;
         t.exists = true;
-        
+
         emit ToolAdded(newToolId);
         return newToolId;
     }
 
-    /**
-     * @dev Add a social link and associated projects to a particular tool.
-     * @param _toolId The tool's ID.
-     * @param _socialType The type of social (e.g., "instagram").
-     * @param _url The URL to the social page.
-     * @param _creatorIds Array of creator IDs.
-     * @param _creatorGithubProfiles Array of creator GitHub profiles.
-     * @param _repoUrls Array of repository URLs for projects under this social link.
-     *
-     * All arrays must have the same length.
-     */
-    function addToolSocial(
+    // Submit a review for a tool
+    function submitReview(
         uint256 _toolId,
-        string memory _socialType,
-        string memory _url,
-        string[] memory _creatorIds,
-        string[] memory _creatorGithubProfiles,
-        string[] memory _repoUrls
-    ) external onlyOwner {
+        uint8 _score,
+        string memory _comment,
+        string memory _projectLink,
+        string[] memory _reviewKeywords,
+        string memory _creatorId,
+        string memory _creatorGithubProfile
+    ) external onlyVerifiedUser {
         require(tools[_toolId].exists, "Tool does not exist");
-        // require(
-        //     _creatorIds.length == _creatorGithubProfiles.length && 
-        //     _creatorIds.length == _repoUrls.length,
-        //     "Arrays length mismatch"
-        // );
+        require(_score >= 1 && _score <= 10, "Score must be 1-10");
 
         Tool storage t = tools[_toolId];
-        Social storage s = t.socials.push();
-        s.socialType = _socialType;
-        s.url = _url;
 
-        for (uint256 i = 0; i < _creatorIds.length; i++) {
-            Project memory p;
-            p.creatorId = _creatorIds[i];
-            p.creatorGithubProfile = _creatorGithubProfiles[i];
-            p.repoUrl = _repoUrls[i];
-            s.projects.push(p);
+        // Add review keywords to tool's keywords
+        for (uint256 i = 0; i < _reviewKeywords.length; i++) {
+            t.keywords.push(_reviewKeywords[i]);
         }
 
-        t.socials.push(s);
+        // Calculate adjusted score
+        uint256 adjustedScore = (_score * 80) / 100; // 80% of user's rating
+        if (bytes(_projectLink).length > 0) {
+            adjustedScore += 2; // Add 20% bonus for project link
+        }
+
+        // Update the tool's average score
+        t.reviewCount++;
+        t.score = ((t.score * (t.reviewCount - 1)) + adjustedScore) / t.reviewCount;
+
+        // Add project data to the tool's projects array
+        if (bytes(_projectLink).length > 0) {
+            t.projects.push(Project({
+                creatorId: _creatorId,
+                creatorGithubProfile: _creatorGithubProfile,
+                repoUrl: _projectLink
+            }));
+        }
+
+        // Add the review to the reviews array
+        toolReviews[_toolId].push(Review({
+            reviewer: msg.sender,
+            score: _score,
+            comment: _comment,
+            projectLink: _projectLink,
+            reviewKeywords: _reviewKeywords
+        }));
+
+        // Increment total reviews
+        totalReviews++;
+
+        // Record the tool ID in user's review history
+        userReviews[msg.sender].push(_toolId);
+
+        emit ReviewSubmitted(_toolId, msg.sender, _score);
     }
 
-    /**
-     * @dev Owner verifies a user after an off-chain Aadhaar verification is done.
-     * @param _user The address of the user who got verified.
-     */
+    // Verify a user after off-chain Aadhaar verification
     function verifyUser(address _user) external onlyOwner {
         verifiedUsers[_user] = true;
         emit UserVerified(_user);
     }
 
-    /**
-     * @dev Verified user submits a review for a tool.
-     * @param _toolId The ID of the tool to review.
-     * @param _score The numeric score (1-10).
-     * @param _comment A textual comment for the review.
-     * @param _reviewKeywords Keywords associated with this review.
-     */
-    function submitReview(
-        uint256 _toolId,
-        uint8 _score,
-        string memory _comment,
-        string[] memory _reviewKeywords
-    ) external {
-        require(tools[_toolId].exists, "Tool does not exist");
-        require(_score >= 0 && _score <= 10, "Score must be 0-10");
-
-        Review memory r;
-        r.reviewer = msg.sender;
-        r.score = _score;
-        r.comment = _comment;
-            // Copy keywords to a temporary array in memory
-    string[] memory tempKeywords = new string[](_reviewKeywords.length);
-    for (uint256 i = 0; i < _reviewKeywords.length; i++) {
-        tempKeywords[i] = _reviewKeywords[i];
-    }
-
-    // Push the review into the storage array
-    toolReviews[_toolId].push(Review({
-        reviewer: r.reviewer,
-        score: r.score,
-        comment: r.comment,
-        reviewKeywords: tempKeywords
-    }));
-
-        emit ReviewSubmitted(_toolId, msg.sender, _score);
-    }
-
-    /**
-     * @dev Retrieve the reviews of a given tool.
-     * @param _toolId The ID of the tool.
-     */
+    // Retrieve all reviews for a specific tool
     function getReviews(uint256 _toolId) external view returns (Review[] memory) {
         return toolReviews[_toolId];
     }
 
-    /**
-     * @dev Retrieve basic tool information.
-     * @param _toolId The ID of the tool.
-     */
+    // Retrieve basic tool information
     function getToolInfo(uint256 _toolId) external view returns (
         string memory image,
         string memory repoLink,
         string memory docsLink,
-        string[] memory keywords
+        string[] memory keywords,
+        uint256 score,
+        uint256 reviewCount,
+        Project[] memory projects
     ) {
         require(tools[_toolId].exists, "Tool does not exist");
         Tool storage t = tools[_toolId];
-        return (t.image, t.repoLink, t.docsLink, t.keywords);
+        return (t.image, t.repoLink, t.docsLink, t.keywords, t.score, t.reviewCount, t.projects);
     }
 
-    /**
-     * @dev Retrieve socials and projects of a given tool.
-     * Note: This might be too large to return in one call if there are many socials/projects.
-     */
+    // Retrieve socials and projects of a given tool
     function getToolSocials(uint256 _toolId) external view returns (Social[] memory) {
         require(tools[_toolId].exists, "Tool does not exist");
         return tools[_toolId].socials;
     }
 
-    // Additional functions for permissions, modifications, etc., can be added as needed.
+    // List all tools
+    function listAllTools() external view returns (Tool[] memory) {
+        Tool[] memory allTools = new Tool[](toolCount);
+        for (uint256 i = 1; i <= toolCount; i++) {
+            allTools[i - 1] = tools[i];
+        }
+        return allTools;
+    }
+
+    // List all reviews for a specific tool
+    function listToolReviews(uint256 _toolId) external view returns (Review[] memory) {
+        require(tools[_toolId].exists, "Tool does not exist");
+        return toolReviews[_toolId];
+    }
+
+    // List all reviews submitted by a specific user
+    function listUserReviews(address _user) external view returns (uint256[] memory) {
+        return userReviews[_user];
+    }
+
+    // Get total number of tools
+    function getTotalToolCount() external view returns (uint256) {
+        return toolCount;
+    }
+
+    // Get total number of reviews across all tools
+    function getTotalReviewCount() external view returns (uint256) {
+        return totalReviews;
+    }
 }
