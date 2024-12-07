@@ -20,7 +20,7 @@ contract ToolReviewManager {
         string image;              // URL or CID of the tool’s image
         string repoLink;           // URL to code repository
         string docsLink;           // URL to documentation
-        Social[] socials;          // Social presence with associated projects
+        Social[] socials;          // Social presence
         Project[] projects;        // Projects associated with the tool
         string[] keywords;         // Keywords for filtering tools
         uint256 score;             // Average score for the tool
@@ -28,18 +28,14 @@ contract ToolReviewManager {
         bool exists;
     }
 
-    struct Reviewer {
-        address reviewerAddress;   // Wallet address of the reviewer
-        bool isAttested;           // Whether the reviewer is attested
-        string attestationId;      // Attestation ID
-        string nullifierHash;      // Unique hash for the attestation
-    }
-
     struct Review {
-        address reviewer;
-        uint8 score;               // 1-10
-        string comment;
-        string projectLink;        // Project link from the reviewer
+        address reviewer;          // Reviewer's wallet address
+        string nullifierId;        // Required nullifier ID for the review
+        bool isAttested;           // Whether the review is attested
+        string attestationId;      // Optional attestation ID
+        uint8 score;               // Score (1-10)
+        string comment;            // Textual comment
+        string projectLink;        // Project link or null
         string[] reviewKeywords;   // Keywords associated with the review
     }
 
@@ -48,12 +44,9 @@ contract ToolReviewManager {
     uint256 public totalReviews;                     // Total number of reviews across all tools
     mapping(uint256 => Tool) public tools;           // toolId => Tool
     mapping(uint256 => Review[]) public toolReviews; // toolId => array of reviews
-    mapping(address => Reviewer) public reviewers;   // address => Reviewer
-    mapping(address => uint256[]) public userReviews; // track all reviews submitted by a user
 
     // Events
     event ToolAdded(uint256 toolId);
-    event UserVerified(address user);
     event ReviewSubmitted(uint256 toolId, address reviewer, uint8 score);
 
     constructor() {
@@ -62,11 +55,6 @@ contract ToolReviewManager {
 
     modifier onlyOwner() {
         require(msg.sender == owner, "Not contract owner");
-        _;
-    }
-
-    modifier onlyVerifiedUser() {
-        require(reviewers[msg.sender].isAttested, "User not attested");
         _;
     }
 
@@ -107,11 +95,13 @@ contract ToolReviewManager {
         string memory _comment,
         string memory _projectLink,
         string[] memory _reviewKeywords,
-        string memory _creatorId,
-        string memory _creatorGithubProfile
-    ) external onlyVerifiedUser {
+        string memory _nullifierId,
+        bool _isAttested,
+        string memory _attestationId
+    ) external {
         require(tools[_toolId].exists, "Tool does not exist");
         require(_score >= 1 && _score <= 10, "Score must be 1-10");
+        require(bytes(_nullifierId).length > 0, "Nullifier ID is required");
 
         Tool storage t = tools[_toolId];
 
@@ -133,8 +123,8 @@ contract ToolReviewManager {
         // Add project data to the tool's projects array
         if (bytes(_projectLink).length > 0) {
             t.projects.push(Project({
-                creatorId: _creatorId,
-                creatorGithubProfile: _creatorGithubProfile,
+                creatorId: "",
+                creatorGithubProfile: "",
                 repoUrl: _projectLink
             }));
         }
@@ -142,48 +132,19 @@ contract ToolReviewManager {
         // Add the review to the reviews array
         toolReviews[_toolId].push(Review({
             reviewer: msg.sender,
+            nullifierId: _nullifierId,
+            isAttested: _isAttested,
+            attestationId: _isAttested ? _attestationId : "",
             score: _score,
             comment: _comment,
-            projectLink: _projectLink,
+            projectLink: bytes(_projectLink).length > 0 ? _projectLink : "",
             reviewKeywords: _reviewKeywords
         }));
 
         // Increment total reviews
         totalReviews++;
 
-        // Record the tool ID in user's review history
-        userReviews[msg.sender].push(_toolId);
-
         emit ReviewSubmitted(_toolId, msg.sender, _score);
-    }
-
-    // Add or update reviewer details
-    function addOrUpdateReviewer(
-        address _reviewerAddress,
-        bool _isAttested,
-        string memory _attestationId,
-        string memory _nullifierHash
-    ) external onlyOwner {
-        reviewers[_reviewerAddress] = Reviewer({
-            reviewerAddress: _reviewerAddress,
-            isAttested: _isAttested,
-            attestationId: _attestationId,
-            nullifierHash: _nullifierHash
-        });
-
-        emit UserVerified(_reviewerAddress);
-    }
-
-    // Get reviewer details by address
-    function getReviewerDetails(address _reviewerAddress) external view returns (
-        address reviewerAddress,
-        bool isAttested,
-        string memory attestationId,
-        string memory nullifierHash
-    ) {
-        Reviewer memory r = reviewers[_reviewerAddress];
-        require(r.reviewerAddress != address(0), "Reviewer not found");
-        return (r.reviewerAddress, r.isAttested, r.attestationId, r.nullifierHash);
     }
 
     // Retrieve all reviews for a specific tool
@@ -225,11 +186,6 @@ contract ToolReviewManager {
     function listToolReviews(uint256 _toolId) external view returns (Review[] memory) {
         require(tools[_toolId].exists, "Tool does not exist");
         return toolReviews[_toolId];
-    }
-
-    // List all reviews submitted by a specific user
-    function listUserReviews(address _user) external view returns (uint256[] memory) {
-        return userReviews[_user];
     }
 
     // Get total number of tools
