@@ -1,11 +1,15 @@
 import React, { useState } from 'react';
 import { CustomButton } from '../../components';
 import VerificationModal from '../tool-components/ansmodal';
+import { useStateContext } from '../../context';
+import { createAttestion } from '../../eas/easCreate';
 
 const Reviews = ({ reviews, address }) => {
   const [showReviewForm, setShowReviewForm] = useState(false);
   const [showVerificationModal, setShowVerificationModal] = useState(false);
   const [reviewToVerify, setReviewToVerify] = useState(null);
+  const { signer } = useStateContext();
+  console.log('signer - ', signer);
   const [newReview, setNewReview] = useState({
     text: '',
     rating: '',
@@ -16,21 +20,21 @@ const Reviews = ({ reviews, address }) => {
     {
       title: 'Content Review',
       description: 'Analyzing review authenticity',
-      icon: null
+      icon: null,
     },
     {
       title: 'GitHub Verification',
       description: 'Validating GitHub profile',
-      icon: null
+      icon: null,
     },
     {
       title: 'Final Approval',
       description: 'Review approved for submission',
-      icon: null
-    }
+      icon: null,
+    },
   ];
 
-  const handleAddReview = () => {
+  const handleAddReview = async () => {
     // Existing validation logic
     if (!newReview.text.trim()) {
       alert('Please enter a review text');
@@ -43,25 +47,29 @@ const Reviews = ({ reviews, address }) => {
       return;
     }
 
-    if (newReview.githubLink && !newReview.githubLink.startsWith('https://github.com/')) {
+    if (
+      newReview.githubLink &&
+      !newReview.githubLink.startsWith('https://github.com/')
+    ) {
       alert('Please enter a valid GitHub URL');
       return;
     }
 
     const reviewToAdd = {
-      userId: address || '0x000...000',
+      address: address || '0x000...000',
+      toolName: 'node',
       userName: 'Anonymous',
-      userLogo: '/api/placeholder/30/30',
+      githubURL: 'https://github.com/shahkushal38/DecentralEyes',
       text: newReview.text,
-      rating: ratingNum,
-      githubLink: newReview.githubLink,
-      attestation: 'Not Verified',
-      projectsBuilt: []
+      rating: newReview.rating,
     };
 
-    // Prepare review for verification
+    console.log('Review to add', reviewToAdd);
     setReviewToVerify(reviewToAdd);
     setShowVerificationModal(true);
+
+    const res = await createAttestion(reviewToAdd, signer);
+    console.log('Response - ', res);
 
     // Reset form
     setNewReview({ text: '', rating: '', githubLink: '' });
@@ -71,7 +79,7 @@ const Reviews = ({ reviews, address }) => {
   const handleSaveReview = (review) => {
     // In a real app, you would save the review to your backend/contract
     console.log('Review saved:', review);
-    
+
     // Close the modal
     setShowVerificationModal(false);
   };
@@ -80,13 +88,13 @@ const Reviews = ({ reviews, address }) => {
     const value = e.target.value;
     // Allow empty string or numbers with up to 1 decimal place
     if (value === '' || /^\d*\.?\d{0,1}$/.test(value)) {
-      setNewReview(prev => ({ ...prev, rating: value }));
+      setNewReview((prev) => ({ ...prev, rating: value }));
     }
   };
 
   return (
     <div className="bg-[#1c1c24] p-6 rounded-[10px]">
-      <VerificationModal 
+      <VerificationModal
         isOpen={showVerificationModal}
         onClose={() => setShowVerificationModal(false)}
         onSave={handleSaveReview}
@@ -98,7 +106,7 @@ const Reviews = ({ reviews, address }) => {
         <h4 className="font-epilogue font-semibold text-[18px] text-white uppercase">
           User Reviews
         </h4>
-        <CustomButton 
+        <CustomButton
           btnType="button"
           title="Add Review"
           styles="bg-[#8c6dfd] text-white py-2 px-4"
@@ -108,18 +116,22 @@ const Reviews = ({ reviews, address }) => {
 
       {showReviewForm && (
         <div className="bg-[#13131a] rounded-[10px] p-6 mb-6 shadow-lg">
-          <textarea 
+          <textarea
             className="w-full bg-[#1c1c24] text-white p-4 rounded-[10px] mb-4 resize-none focus:outline-none focus:ring-2 focus:ring-[#8c6dfd]"
             placeholder="Write your review here..."
             value={newReview.text}
-            onChange={(e) => setNewReview(prev => ({ ...prev, text: e.target.value }))}
+            onChange={(e) =>
+              setNewReview((prev) => ({ ...prev, text: e.target.value }))
+            }
             rows="4"
           />
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-white mb-2 text-[14px]">Rating</label>
+              <label className="block text-white mb-2 text-[14px]">
+                Rating
+              </label>
               <div className="flex items-center">
-                <input 
+                <input
                   type="text"
                   className="bg-[#1c1c24] text-white p-2 rounded-lg w-24"
                   placeholder="2.5"
@@ -130,17 +142,24 @@ const Reviews = ({ reviews, address }) => {
               </div>
             </div>
             <div>
-              <label className="block text-white mb-2 text-[14px]">GitHub Link</label>
+              <label className="block text-white mb-2 text-[14px]">
+                GitHub Link
+              </label>
               <input
                 type="url"
                 className="w-full bg-[#1c1c24] text-white p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#8c6dfd]"
                 placeholder="https://github.com/username/repo"
                 value={newReview.githubLink}
-                onChange={(e) => setNewReview(prev => ({ ...prev, githubLink: e.target.value }))}
+                onChange={(e) =>
+                  setNewReview((prev) => ({
+                    ...prev,
+                    githubLink: e.target.value,
+                  }))
+                }
               />
             </div>
           </div>
-          <CustomButton 
+          <CustomButton
             btnType="button"
             title="Submit Review"
             styles="w-full mt-4 bg-[#8c6dfd] text-white py-3"
@@ -151,14 +170,14 @@ const Reviews = ({ reviews, address }) => {
 
       <div className="space-y-6">
         {reviews.map((review, index) => (
-          <div 
-            key={index} 
+          <div
+            key={index}
             className="bg-[#13131a] rounded-[10px] p-6 border border-[#3a3a43]"
           >
             <div className="flex items-center space-x-4 mb-4">
-              <img 
-                src={review.userLogo} 
-                alt="user" 
+              <img
+                src={review.userLogo}
+                alt="user"
                 className="w-12 h-12 rounded-full object-cover border-2 border-[#8c6dfd]"
               />
               <div>
@@ -166,7 +185,7 @@ const Reviews = ({ reviews, address }) => {
                   {review.userId}
                 </h5>
                 {review.githubLink && (
-                  <a 
+                  <a
                     href={review.githubLink}
                     target="_blank"
                     rel="noopener noreferrer"
@@ -185,12 +204,16 @@ const Reviews = ({ reviews, address }) => {
                   <span className="text-[#4acd8d]">{review.rating}/5.0</span>
                 </div>
                 <div>
-                  <span className="text-white mr-2 text-[14px]">Attestation:</span>
-                  <span className={`px-2 py-1 rounded-full text-[12px] ${
-                    review.attestation === 'Verified' 
-                      ? 'bg-[#4acd8d] text-white' 
-                      : 'bg-[#3a3a43] text-[#808191]'
-                  }`}>
+                  <span className="text-white mr-2 text-[14px]">
+                    Attestation:
+                  </span>
+                  <span
+                    className={`px-2 py-1 rounded-full text-[12px] ${
+                      review.attestation === 'Verified'
+                        ? 'bg-[#4acd8d] text-white'
+                        : 'bg-[#3a3a43] text-[#808191]'
+                    }`}
+                  >
                     {review.attestation}
                   </span>
                 </div>

@@ -1,47 +1,28 @@
-import React, { useContext, createContext, useState } from 'react';
-import { useAddress, useContract, useMetamask, useContractWrite } from '@thirdweb-dev/react';
-import { ethers } from 'ethers';
-import { EditionMetadataWithOwnerOutputSchema } from '@thirdweb-dev/sdk';
+import { useWeb3React } from '@web3-react/core';
+import { InjectedConnector } from '@web3-react/injected-connector';
+import { WalletLinkConnector } from '@web3-react/walletlink-connector';
+import React, { useContext, createContext, useState, act } from 'react';
 
 const StateContext = createContext();
 
 export const StateContextProvider = ({ children }) => {
-  const { contract } = useContract('0xf59A1f8251864e1c5a6bD64020e3569be27e6AA9');
-  const { mutateAsync: createCampaign } = useContractWrite(contract, 'createCampaign');
-  
-  const [walletType, setWalletType] = useState(null);
-  
-  // Wallet connection methods
-  const connectMetamask = useMetamask();
-  
-  const connectCoinbase = async () => {
-    try {
-      // Check if Coinbase Wallet is available
-      if (window.ethereum && window.ethereum.isCoinbaseWallet) {
-        await window.ethereum.request({ method: 'eth_requestAccounts' });
-        setWalletType('coinbase');
-        return true;
-      }
-      
-      // If Coinbase Wallet extension is not installed, prompt to install
-      window.open('https://www.coinbase.com/wallet', '_blank');
-      return false;
-    } catch (error) {
-      console.error('Coinbase Wallet Connection Error:', error);
-      return false;
-    }
-  };
+  const { activate, deactivate, account } = useWeb3React();
+
+  // const CoinbaseWallet = new WalletLinkConnector({
+  //   url: `https://sepolia.base.org`,
+  //   appName: 'DecentralEyes',
+  //   supportedChainIds: [84532],
+  // });
+
+  // console.log('COinbase Wallet- ', CoinbaseWallet);
+
+  const Injected = new InjectedConnector({
+    supportedChainIds: [1, 3, 4, 5, 42],
+  });
 
   const connectWallet = async (type) => {
     try {
-      if (type === 'metamask') {
-        await connectMetamask();
-        setWalletType('metamask');
-      } else if (type === 'coinbase') {
-        await connectCoinbase();
-      } else {
-        throw new Error('Unsupported wallet type');
-      }
+      activate(Injected);
     } catch (error) {
       console.error('Wallet Connection Error:', error);
       throw error;
@@ -49,22 +30,16 @@ export const StateContextProvider = ({ children }) => {
   };
 
   const disconnectWallet = () => {
-    // Basic wallet disconnection
-    if (window.ethereum) {
-      window.ethereum.removeAllListeners();
-      setWalletType(null);
-    }
+    deactivate;
   };
 
+  console.log('Account - ', account);
   return (
-    <StateContext.Provider 
-      value={{ 
-        address: useAddress(), 
-        contract, 
-        createCampaign,
+    <StateContext.Provider
+      value={{
+        address: account,
         connectWallet,
         disconnectWallet,
-        walletType
       }}
     >
       {children}
