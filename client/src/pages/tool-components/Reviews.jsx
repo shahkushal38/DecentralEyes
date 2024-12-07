@@ -122,11 +122,11 @@ const Reviews = ({ reviews, address }) => {
                 <input 
                   type="text"
                   className="bg-[#1c1c24] text-white p-2 rounded-lg w-24"
-                  placeholder="2.5"
+                  placeholder="rating"
                   value={newReview.rating}
                   onChange={handleRatingChange}
                 />
-                <span className="ml-2 text-[#4acd8d]">/5.0</span>
+                <span className="ml-2 text-[#4acd8d]">/10</span>
               </div>
             </div>
             <div>
