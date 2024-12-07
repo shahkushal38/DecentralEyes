@@ -1,15 +1,13 @@
 import React, { useState } from 'react';
 import { CustomButton } from '../../components';
 import VerificationModal from '../tool-components/ansmodal';
-import { useStateContext } from '../../context';
 import { createAttestion } from '../../eas/easCreate';
 
 const Reviews = ({ reviews, address }) => {
   const [showReviewForm, setShowReviewForm] = useState(false);
   const [showVerificationModal, setShowVerificationModal] = useState(false);
   const [reviewToVerify, setReviewToVerify] = useState(null);
-  const { signer } = useStateContext();
-  console.log('signer - ', signer);
+
   const [newReview, setNewReview] = useState({
     text: '',
     rating: '',

@@ -1,16 +1,20 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useStateContext } from '../context';
 import { CustomButton } from './';
-import { logo, menu, search} from '../assets';
+import { logo, menu, search } from '../assets';
 import { navlinks } from '../constants';
+import {
+  connectWallet,
+  disconnectWallet,
+  getWalletAddress,
+} from '../context/CoinBaseWallet';
 
 const Navbar = () => {
   const navigate = useNavigate();
   const [isActive, setIsActive] = useState('dashboard');
   const [toggleDrawer, setToggleDrawer] = useState(false);
   const [showWalletDropdown, setShowWalletDropdown] = useState(false);
-  const { connectWallet, address } = useStateContext();
+  const address = getWalletAddress();
   const [isConnected, setIsConnected] = useState(false);
 
   // Update connection status when address changes
@@ -26,7 +30,7 @@ const Navbar = () => {
 
   const handleConnection = async (walletType) => {
     try {
-      await connectWallet(walletType);
+      await connectWallet();
       setShowWalletDropdown(false);
       setIsConnected(true);
     } catch (error) {
@@ -34,20 +38,23 @@ const Navbar = () => {
       alert(`Failed to connect ${walletType} wallet. Please try again.`);
       setIsConnected(false);
     }
-  }
+  };
 
   console.log('address:', address);
   const handleDisconnect = () => {
     try {
       // Generic wallet disconnection method
+      disconnectWallet();
       if (window.ethereum) {
         window.ethereum.removeAllListeners();
-        window.ethereum.request({
-          method: "wallet_requestPermissions",
-          params: [{ eth_accounts: {} }]
-        }).then(() => {
-          window.location.reload();
-        });
+        window.ethereum
+          .request({
+            method: 'wallet_requestPermissions',
+            params: [{ eth_accounts: {} }],
+          })
+          .then(() => {
+            window.location.reload();
+          });
       } else {
         // Fallback for other wallet types
         window.location.reload();
@@ -61,7 +68,9 @@ const Navbar = () => {
 
   // Connection Status Indicator
   const ConnectionIndicator = () => (
-    <div className={`w-3 h-3 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`}></div>
+    <div
+      className={`w-3 h-3 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`}
+    ></div>
   );
 
   const WalletDropdown = () => (
@@ -93,7 +102,7 @@ const Navbar = () => {
           {formatAddress(address)}
         </p>
       </div>
-      <CustomButton 
+      <CustomButton
         btnType="button"
         title="Disconnect"
         styles="bg-[#8c6dfd] text-xs py-1 px-2"
@@ -106,14 +115,18 @@ const Navbar = () => {
     <div className="flex md:flex-row flex-col-reverse justify-between mb-[35px] gap-6">
       {/* Search Bar - Responsive Design */}
       <div className="lg:flex-1 flex flex-row max-w-[458px] w-full py-2 pl-4 pr-2 h-[52px] bg-[#1c1c24] rounded-[100px]">
-        <input 
-          type="text" 
-          placeholder="Search for campaigns" 
-          className="flex w-full font-epilogue font-normal text-[14px] placeholder:text-[#4b5264] text-white bg-transparent outline-none" 
+        <input
+          type="text"
+          placeholder="Search for campaigns"
+          className="flex w-full font-epilogue font-normal text-[14px] placeholder:text-[#4b5264] text-white bg-transparent outline-none"
         />
-        
+
         <div className="w-[72px] h-full rounded-[20px] bg-[#4acd8d] flex justify-center items-center cursor-pointer">
-          <img src={search} alt="search" className="w-[15px] h-[15px] object-contain"/>
+          <img
+            src={search}
+            alt="search"
+            className="w-[15px] h-[15px] object-contain"
+          />
         </div>
       </div>
 
@@ -124,7 +137,7 @@ const Navbar = () => {
             <WalletDetails />
           ) : (
             <>
-              <CustomButton 
+              <CustomButton
                 btnType="button"
                 title="Connect Wallet"
                 styles="bg-[#8c6dfd]"
@@ -146,12 +159,16 @@ const Navbar = () => {
       <div className="sm:hidden flex justify-between items-center relative w-full">
         <div className="flex items-center gap-4 w-full">
           <div className="w-[40px] h-[40px] rounded-[10px] bg-[#2c2f32] flex justify-center items-center cursor-pointer">
-            <img src={logo} alt="user" className="w-[60%] h-[60%] object-contain" />
+            <img
+              src={logo}
+              alt="user"
+              className="w-[60%] h-[60%] object-contain"
+            />
           </div>
 
           <div className="flex-grow"></div>
 
-          <img 
+          <img
             src={menu}
             alt="menu"
             className="w-[34px] h-[34px] object-contain cursor-pointer"
@@ -159,7 +176,9 @@ const Navbar = () => {
           />
         </div>
 
-        <div className={`absolute top-[60px] right-0 left-0 bg-[#1c1c24] z-50 shadow-secondary py-4 ${!toggleDrawer ? '-translate-y-[100vh]' : 'translate-y-0'} transition-all duration-700`}>
+        <div
+          className={`absolute top-[60px] right-0 left-0 bg-[#1c1c24] z-50 shadow-secondary py-4 ${!toggleDrawer ? '-translate-y-[100vh]' : 'translate-y-0'} transition-all duration-700`}
+        >
           <ul className="mb-4">
             {navlinks.map((link) => (
               <li
@@ -171,12 +190,14 @@ const Navbar = () => {
                   navigate(link.link);
                 }}
               >
-                <img 
+                <img
                   src={link.imgUrl}
                   alt={link.name}
                   className={`w-[24px] h-[24px] object-contain ${isActive === link.name ? 'grayscale-0' : 'grayscale'}`}
                 />
-                <p className={`ml-[20px] font-epilogue font-semibold text-[14px] ${isActive === link.name ? 'text-[#1dc071]' : 'text-[#808191]'}`}>
+                <p
+                  className={`ml-[20px] font-epilogue font-semibold text-[14px] ${isActive === link.name ? 'text-[#1dc071]' : 'text-[#808191]'}`}
+                >
                   {link.name}
                 </p>
               </li>
@@ -188,7 +209,7 @@ const Navbar = () => {
               <WalletDetails />
             ) : (
               <>
-                <CustomButton 
+                <CustomButton
                   btnType="button"
                   title="Connect Wallet"
                   styles="bg-[#8c6dfd] w-full"
@@ -201,7 +222,7 @@ const Navbar = () => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default Navbar
+export default Navbar;

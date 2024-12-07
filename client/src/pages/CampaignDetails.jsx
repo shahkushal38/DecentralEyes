@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ethers } from 'ethers';
 
-import { useStateContext } from '../context';
 import { CountBox, CustomButton, Loader } from '../components';
 
 import Creator from './tool-components/Creator';
@@ -10,11 +9,14 @@ import ProofOfConcept from './tool-components/Proof';
 import SmartContracts from './tool-components/SmartCon';
 import Reviews from './tool-components/Reviews';
 import Statistics from './tool-components/Stats';
+import { getWalletAddress } from '../context/CoinBaseWallet';
 
 const CampaignDetails = () => {
   const { state } = useLocation();
   const navigate = useNavigate();
-  const { address } = useStateContext();
+  const address = getWalletAddress();
+
+  console.log('Address - ', address);
 
   const [isLoading, setIsLoading] = useState(false);
   const [reviews, setReviews] = useState(state.reviews || []);

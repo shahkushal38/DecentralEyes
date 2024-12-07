@@ -9,6 +9,7 @@
     "deploy": "yarn build && npx thirdweb@latest upload dist"
   },
   "dependencies": {
+    "@coinbase/wallet-sdk": "^4.2.4",
     "@ethereum-attestation-service/eas-sdk": "^2.7.0",
     "@web3-react/core": "^8.2.3",
     "@web3-react/injected-connector": "^6.0.7",
