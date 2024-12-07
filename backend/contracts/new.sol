@@ -11,9 +11,8 @@ contract ToolReviewManager {
     }
 
     struct Social {
-        string socialType; // e.g., "instagram", "twitter"
-        string url;        // e.g., "https://instagram.com/xyz"
-        Project[] projects;
+        string socialType; // e.g., "twitter", "instagram"
+        string url;        // e.g., "https://twitter.com/tool"
     }
 
     struct Tool {
@@ -29,6 +28,13 @@ contract ToolReviewManager {
         bool exists;
     }
 
+    struct Reviewer {
+        address reviewerAddress;   // Wallet address of the reviewer
+        bool isAttested;           // Whether the reviewer is attested
+        string attestationId;      // Attestation ID
+        string nullifierHash;      // Unique hash for the attestation
+    }
+
     struct Review {
         address reviewer;
         uint8 score;               // 1-10
@@ -39,10 +45,10 @@ contract ToolReviewManager {
 
     // State variables
     uint256 public toolCount;
-    uint256 public totalReviews;                   // Total number of reviews across all tools
-    mapping(uint256 => Tool) public tools;         // toolId => Tool
+    uint256 public totalReviews;                     // Total number of reviews across all tools
+    mapping(uint256 => Tool) public tools;           // toolId => Tool
     mapping(uint256 => Review[]) public toolReviews; // toolId => array of reviews
-    mapping(address => bool) public verifiedUsers; // track if a user is Aadhaar-verified
+    mapping(address => Reviewer) public reviewers;   // address => Reviewer
     mapping(address => uint256[]) public userReviews; // track all reviews submitted by a user
 
     // Events
@@ -60,7 +66,7 @@ contract ToolReviewManager {
     }
 
     modifier onlyVerifiedUser() {
-        require(verifiedUsers[msg.sender], "User not verified");
+        require(reviewers[msg.sender].isAttested, "User not attested");
         _;
     }
 
@@ -80,11 +86,12 @@ contract ToolReviewManager {
         t.repoLink = _repoLink;
         t.docsLink = _docsLink;
 
+        // Add socials to the tool
         for (uint256 i = 0; i < _socials.length; i++) {
-            t.socials.push(_socials[i]);
+            Social memory social = _socials[i];
+            t.socials.push(Social({ socialType: social.socialType, url: social.url }));
         }
 
-        // Dynamic arrays are automatically initialized as empty
         t.score = 0;                 // Default score is 0
         t.reviewCount = 0;
         t.exists = true;
@@ -150,10 +157,33 @@ contract ToolReviewManager {
         emit ReviewSubmitted(_toolId, msg.sender, _score);
     }
 
-    // Verify a user after off-chain Aadhaar verification
-    function verifyUser(address _user) external onlyOwner {
-        verifiedUsers[_user] = true;
-        emit UserVerified(_user);
+    // Add or update reviewer details
+    function addOrUpdateReviewer(
+        address _reviewerAddress,
+        bool _isAttested,
+        string memory _attestationId,
+        string memory _nullifierHash
+    ) external onlyOwner {
+        reviewers[_reviewerAddress] = Reviewer({
+            reviewerAddress: _reviewerAddress,
+            isAttested: _isAttested,
+            attestationId: _attestationId,
+            nullifierHash: _nullifierHash
+        });
+
+        emit UserVerified(_reviewerAddress);
+    }
+
+    // Get reviewer details by address
+    function getReviewerDetails(address _reviewerAddress) external view returns (
+        address reviewerAddress,
+        bool isAttested,
+        string memory attestationId,
+        string memory nullifierHash
+    ) {
+        Reviewer memory r = reviewers[_reviewerAddress];
+        require(r.reviewerAddress != address(0), "Reviewer not found");
+        return (r.reviewerAddress, r.isAttested, r.attestationId, r.nullifierHash);
     }
 
     // Retrieve all reviews for a specific tool
@@ -176,7 +206,7 @@ contract ToolReviewManager {
         return (t.image, t.repoLink, t.docsLink, t.keywords, t.score, t.reviewCount, t.projects);
     }
 
-    // Retrieve socials and projects of a given tool
+    // Retrieve socials of a given tool
     function getToolSocials(uint256 _toolId) external view returns (Social[] memory) {
         require(tools[_toolId].exists, "Tool does not exist");
         return tools[_toolId].socials;
