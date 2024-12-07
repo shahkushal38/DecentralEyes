@@ -81,15 +81,9 @@ const Navbar = () => {
           className="w-full text-left px-4 py-2 text-sm text-gray-200 hover:bg-[#2c2f32] hover:text-white"
           role="menuitem"
         >
-          Connect with MetaMask
-        </button>
-        <button
-          onClick={() => handleConnection('coinbase')}
-          className="w-full text-left px-4 py-2 text-sm text-gray-200 hover:bg-[#2c2f32] hover:text-white"
-          role="menuitem"
-        >
           Connect with Coinbase
         </button>
+        
       </div>
     </div>
   );
