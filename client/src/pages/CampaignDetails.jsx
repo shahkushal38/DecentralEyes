@@ -1,73 +1,218 @@
-import React, { useState, useEffect } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
-import { ethers } from 'ethers';
-
-import { CountBox, CustomButton, Loader } from '../components';
-
-import Creator from './tool-components/Creator';
-import ProofOfConcept from './tool-components/Proof';
-import SmartContracts from './tool-components/SmartCon';
-import Reviews from './tool-components/Reviews';
-import Statistics from './tool-components/Stats';
-import { getWalletAddress } from '../context/CoinBaseWallet';
+import React, { useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
+import { getReviewsForTool } from '../abi'; // Ensure this is correctly imported
+import { loader } from '../assets'; // If you have a loader asset
 
 const CampaignDetails = () => {
-  const { state } = useLocation();
-  const navigate = useNavigate();
-  const address = getWalletAddress();
+  const { state } = useLocation(); // state should be the 'tool' object
+  const [reviews, setReviews] = useState([]);
+  const [isLoadingReviews, setIsLoadingReviews] = useState(true);
 
-  console.log('Address - ', address);
+  // If the tool doesn't exist in state, you might want to handle that gracefully
+  if (!state || !state.id) {
+    return (
+      <div className="text-white p-4">
+        <h1>Tool not found</h1>
+      </div>
+    );
+  }
 
-  const [isLoading, setIsLoading] = useState(false);
-  const [reviews, setReviews] = useState(state.reviews || []);
+  const {
+    id,
+    image,
+    repoLink,
+    docsLink,
+    socials,
+    projects,
+    keywords,
+    score,
+    reviewCount,
+    totalAttested,
+    exists
+  } = state;
+
+  useEffect(() => {
+    const fetchReviews = async () => {
+      setIsLoadingReviews(true);
+      try {
+        const fetchedReviews = await getReviewsForTool(id);
+        setReviews(fetchedReviews);
+      } catch (error) {
+        console.error("Error fetching reviews:", error);
+      }
+      setIsLoadingReviews(false);
+    };
+    fetchReviews();
+  }, [id]);
+
+  // Convert score from a 1-10 scale to a percentage for a rating bar
+  const ratingOutOf10 = Number(score);
+  const ratingPercentage = (ratingOutOf10 / 10) * 100;
 
   return (
-    <div>
-      {isLoading && <Loader />}
-
-      <div className="w-full flex md:flex-row flex-col mt-10 gap-[30px]">
-        <div className="flex-1 flex-col">
-          <img
-            src={state.image}
-            alt="tool"
-            className="w-full h-[410px] object-cover rounded-xl"
+    <div className="text-white p-6 max-w-5xl mx-auto space-y-8">
+      {/* Top Section: Image and Basic Info */}
+      <div className="flex flex-col md:flex-row gap-6">
+        <div className="flex-1">
+          <img 
+            src={image || '/api/placeholder/600/300'} 
+            alt="Tool" 
+            className="w-full h-auto object-cover rounded-lg shadow-lg"
           />
-          <div className="relative w-full h-[5px] bg-[#3a3a43] mt-2">
-            <div
-              className="absolute h-full bg-[#4acd8d]"
-              style={{
-                width: `${(state.rating / 5) * 100}%`,
-                maxWidth: '100%',
-              }}
-            ></div>
-          </div>
         </div>
 
-        <div className="flex md:w-[150px] w-full flex-wrap justify-between gap-[30px]">
-          <CountBox title="Rating" value={`${state.rating}/5.0`} />
-          <CountBox
-            title="Smart Contracts"
-            value={state.smartContracts?.length || 0}
-          />
-          <CountBox title="Review Count" value={state.reviews?.length || 0} />
+        <div className="flex-1 space-y-4">
+          <h2 className="font-bold text-2xl">Tool ID: {id}</h2>
+          <p><strong>Repo Link:</strong> <a href={repoLink} target="_blank" rel="noopener noreferrer" className="text-blue-400 underline break-all">{repoLink}</a></p>
+          <p><strong>Docs Link:</strong> <a href={docsLink} target="_blank" rel="noopener noreferrer" className="text-blue-400 underline break-all">{docsLink}</a></p>
+
+          <div className="space-y-1">
+            <p><strong>Exists:</strong> {exists ? 'Yes' : 'No'}</p>
+            <p><strong>Review Count:</strong> {reviewCount}</p>
+            <p><strong>Attested Reviews:</strong> {totalAttested}</p>
+          </div>
+
+          {/* Rating bar */}
+          <div>
+            <span className="text-sm font-semibold block mb-1">Rating: {ratingOutOf10}/10</span>
+            <div className="w-full bg-[#2c2c35] rounded-full h-2.5">
+              <div 
+                className="bg-blue-600 h-2.5 rounded-full" 
+                style={{ width: `${ratingPercentage}%` }}
+              ></div>
+            </div>
+          </div>
         </div>
       </div>
 
-      <div className="mt-[60px] flex lg:flex-row flex-col gap-5">
-        <div className="flex-[2] flex flex-col gap-[40px]">
-          <Creator
-            owner={state.owner}
-            description={state.description}
-            link={state.link}
-          />
-          <ProofOfConcept proofOfConcept={state.proofOfConcept} />
-          <SmartContracts smartContracts={state.smartContracts} />
-          <Reviews reviews={reviews} address={address} />
+      {/* Socials */}
+      {socials && socials.length > 0 && (
+        <div className="space-y-2">
+          <h3 className="font-bold text-xl">Socials</h3>
+          <ul className="list-disc list-inside space-y-1 text-[#808191]">
+            {socials.map((social, index) => (
+              <li key={index}>
+                <strong className="text-white">{social.socialType}:</strong>{" "}
+                <a href={social.url} target="_blank" rel="noopener noreferrer" className="text-blue-400 underline break-all">{social.url}</a>
+              </li>
+            ))}
+          </ul>
         </div>
+      )}
 
-        <div className="flex-1">
-          <Statistics state={state} reviews={reviews} />
+      {/* Projects */}
+      {projects && projects.length > 0 && (
+        <div className="space-y-2">
+          <h3 className="font-bold text-xl">Projects</h3>
+          <ul className="list-disc list-inside space-y-4 text-[#808191]">
+            {projects.map((project, index) => (
+              <li key={index} className="bg-[#1c1c24] p-4 rounded-lg">
+                <p><strong className="text-white">Creator ID:</strong> {project.creatorId || 'N/A'}</p>
+                <p><strong className="text-white">Creator GitHub:</strong> {project.creatorGithubProfile || 'N/A'}</p>
+                <p><strong className="text-white">Project Repo URL:</strong> <a href={project.repoUrl} target="_blank" rel="noopener noreferrer" className="text-blue-400 underline break-all">{project.repoUrl}</a></p>
+              </li>
+            ))}
+          </ul>
         </div>
+      )}
+
+      {/* Keywords */}
+      {keywords && keywords.length > 0 && (
+        <div className="space-y-2">
+          <h3 className="font-bold text-xl">Keywords</h3>
+          <div className="flex flex-wrap gap-2">
+            {keywords.map((keyword, index) => (
+              <span 
+                key={index} 
+                className="px-2 py-1 text-sm bg-[#2c2c35] text-white rounded-full"
+              >
+                {keyword}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Reviews Section */}
+      <div className="space-y-4">
+        <h3 className="font-bold text-xl">Reviews</h3>
+        {isLoadingReviews && (
+          <div className="flex justify-center">
+            <img src={loader} alt="Loading..." className="w-8 h-8"/>
+          </div>
+        )}
+
+        {!isLoadingReviews && reviews.length === 0 && (
+          <p className="text-[#808191]">No reviews yet.</p>
+        )}
+
+        {!isLoadingReviews && reviews.length > 0 && (
+          <div className="space-y-4">
+            {reviews.map((review, index) => {
+              const reviewRating = Number(review.rating);
+              const reviewRatingPercentage = (reviewRating / 10) * 100;
+
+              return (
+                <div key={index} className="bg-[#1c1c24] p-4 rounded-lg space-y-2 border border-[#3a3a43]">
+                  <div className="flex items-center space-x-4">
+                    <div className="w-10 h-10 rounded-full bg-[#13131a] flex items-center justify-center">
+                      <img src={review.userLogo || "/api/placeholder/30/30"} alt="user" className="w-1/2 h-1/2 object-cover rounded-full"/>
+                    </div>
+                    <div className="text-sm">
+                      <p className="text-white font-semibold">{review.userId}</p>
+                      {review.githubLink && (
+                        <a 
+                          href={review.githubLink} 
+                          target="_blank" 
+                          rel="noopener noreferrer" 
+                          className="text-blue-400 underline text-xs"
+                        >
+                          GitHub Project
+                        </a>
+                      )}
+                    </div>
+                  </div>
+
+                  <p className="text-[#808191]">{review.text}</p>
+
+                  {/* Review rating */}
+                  <div>
+                    <span className="text-white text-sm font-semibold">Rating: {reviewRating}/10</span>
+                    <div className="w-full bg-[#2c2c35] rounded-full h-2.5 mt-1">
+                      <div 
+                        className="bg-blue-600 h-2.5 rounded-full" 
+                        style={{ width: `${reviewRatingPercentage}%` }}
+                      ></div>
+                    </div>
+                  </div>
+
+                  {/* Attestation */}
+                  <div>
+                    <span className="text-white text-sm font-semibold mr-2">Attestation:</span>
+                    <span className={`px-2 py-1 rounded-full text-xs ${
+                      review.attestation === 'Verified' 
+                        ? 'bg-[#4acd8d] text-white' 
+                        : 'bg-[#3a3a43] text-[#808191]'
+                    }`}>
+                      {review.attestation}
+                    </span>
+                  </div>
+
+                  {/* Review Keywords if any */}
+                  {review.reviewKeywords && review.reviewKeywords.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {review.reviewKeywords.map((kw, i) => (
+                        <span key={i} className="px-2 py-1 text-xs bg-[#2c2c35] text-white rounded-full">
+                          {kw}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>
   );

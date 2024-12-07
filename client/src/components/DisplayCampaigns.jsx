@@ -1,72 +1,38 @@
-import React from 'react';
+// DisplayCampaigns.jsx
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { v4 as uuidv4 } from "uuid";
 import FundCard from './FundCard';
 import { loader } from '../assets';
-
-const sampleTools = [
-  {
-    id: 1,
-    title: "Hardhat",
-    description: "lorem ipsum",
-    image: "/api/placeholder/288/158",
-    rating: 4.8,
-    owner: "Nomic Labs",
-    link:"www.xample.com",
-    proofOfConcept: {
-      description: "Complete development and testing environment",
-      githubLink: "https://github.com/NomicFoundation/hardhat",
-    },
-    smartContracts: [
-      {
-        name: "HardhatToken",
-        description: "ERC20 implementation with Hardhat",
-        review: "Highly secure implementation with comprehensive testing suite",
-        rating: 4.9
-      },
-      {
-        name: "NFT Marketplace",
-        description: "NFT trading platform",
-        review: "Well-structured with good security practices",
-        rating: 4.7
-      }
-    ],
-    totalProjects: 15000,
-    reviews: [
-      {
-        userId: "0x123...abc",
-        userName: "Alex Dev",
-        userLogo: "/api/placeholder/30/30",
-        text: "Best tool for Ethereum development",
-        rating: 5.0,
-        attestation: "0xabc1111111111111111111111123", // Ethereum Attestation Service ID
-        projectsBuilt: ["DeFi Protocol", "NFT Platform"]
-      },
-      {
-        userId: "0x456...def",
-        userName: "Sarah Chain",
-        userLogo: "/api/placeholder/30/30",
-        text: "Excellent testing capabilities",
-        rating: 4.7,
-        attestation: "0xdef11111111111111111456",
-        projectsBuilt: ["DEX", "Lending Protocol"]
-      }
-    ]
-  },
-  // ... (other sample tools remain the same)
-];
-
-const DisplayCampaigns = ({ title, isLoading, tools = sampleTools }) => {
+import { getAllTools } from '../abi/index';
+import {
+  getWalletAddress,
+} from '../context/CoinBaseWallet'
+const DisplayCampaigns = ({ title }) => {
+  const address = getWalletAddress();
   const navigate = useNavigate();
+  const [tools, setTools] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   const handleNavigate = (tool) => {
-    navigate(`/campaign-details/${tool.title}`, { state: tool })
-  }
-  
+    // Navigate to details page with the full tool data
+    navigate(`/campaign-details/${tool.id}`, { state: tool });
+  };
+
+  useEffect(() => {
+    const fetchTools = async () => {
+      setIsLoading(true);
+      const fetchedTools = await getAllTools();
+      setTools(fetchedTools);
+      setIsLoading(false);
+    };
+
+    fetchTools();
+  }, [address]);
+
   return (
     <div>
       <h1 className="font-epilogue font-semibold text-[18px] text-white text-left">
-        {title} ({tools.length})
+        {title} ({tools?.length})
       </h1>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-[20px]">
@@ -74,22 +40,26 @@ const DisplayCampaigns = ({ title, isLoading, tools = sampleTools }) => {
           <img src={loader} alt="loader" className="w-[100px] h-[100px] object-contain" />
         )}
 
-        {!isLoading && tools.length === 0 && (
+        {!isLoading && tools?.length === 0 && (
           <p className="font-epilogue font-semibold text-[14px] leading-[30px] text-[#818183]">
             No tools available yet
           </p>
         )}
 
-        {!isLoading && tools.length > 0 && tools.map((tool) => (
+        {!isLoading && tools?.length > 0 && tools.map((tool) => (
           <FundCard 
-            key={uuidv4()}
-            {...tool}
+            key={tool.id}
+            id={tool.id}
+            name={tool.name}
+            description={tool.description}
+            image={tool.image}
+            score={tool.score}
             handleClick={() => handleNavigate(tool)}
           />
         ))}
       </div>
     </div>
-  )
-}
+  );
+};
 
 export default DisplayCampaigns;
