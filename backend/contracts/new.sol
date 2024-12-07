@@ -25,6 +25,7 @@ contract ToolReviewManager {
         string[] keywords;         // Keywords for filtering tools
         uint256 score;             // Average score for the tool
         uint256 reviewCount;       // Number of reviews
+        uint256 totalAttested;     // Number of attested reviews
         bool exists;
     }
 
@@ -82,6 +83,7 @@ contract ToolReviewManager {
 
         t.score = 0;                 // Default score is 0
         t.reviewCount = 0;
+        t.totalAttested = 0;         // Default attested review count is 0
         t.exists = true;
 
         emit ToolAdded(newToolId);
@@ -112,8 +114,9 @@ contract ToolReviewManager {
 
         // Calculate adjusted score
         uint256 adjustedScore = (_score * 80) / 100; // 80% of user's rating
-        if (bytes(_projectLink).length > 0) {
-            adjustedScore += 2; // Add 20% bonus for project link
+        if (_isAttested) {
+            adjustedScore += 2; // Add 20% bonus for attested review
+            t.totalAttested++;
         }
 
         // Update the tool's average score
@@ -147,33 +150,7 @@ contract ToolReviewManager {
         emit ReviewSubmitted(_toolId, msg.sender, _score);
     }
 
-    // Retrieve all reviews for a specific tool
-    function getReviews(uint256 _toolId) external view returns (Review[] memory) {
-        return toolReviews[_toolId];
-    }
-
-    // Retrieve basic tool information
-    function getToolInfo(uint256 _toolId) external view returns (
-        string memory image,
-        string memory repoLink,
-        string memory docsLink,
-        string[] memory keywords,
-        uint256 score,
-        uint256 reviewCount,
-        Project[] memory projects
-    ) {
-        require(tools[_toolId].exists, "Tool does not exist");
-        Tool storage t = tools[_toolId];
-        return (t.image, t.repoLink, t.docsLink, t.keywords, t.score, t.reviewCount, t.projects);
-    }
-
-    // Retrieve socials of a given tool
-    function getToolSocials(uint256 _toolId) external view returns (Social[] memory) {
-        require(tools[_toolId].exists, "Tool does not exist");
-        return tools[_toolId].socials;
-    }
-
-    // List all tools
+    // Get all tools with all details
     function listAllTools() external view returns (Tool[] memory) {
         Tool[] memory allTools = new Tool[](toolCount);
         for (uint256 i = 1; i <= toolCount; i++) {
@@ -182,10 +159,31 @@ contract ToolReviewManager {
         return allTools;
     }
 
-    // List all reviews for a specific tool
-    function listToolReviews(uint256 _toolId) external view returns (Review[] memory) {
+    // Retrieve specific tool information including socials and projects
+    function getToolInfo(uint256 _toolId) external view returns (
+        string memory image,
+        string memory repoLink,
+        string memory docsLink,
+        Social[] memory socials,
+        Project[] memory projects,
+        string[] memory keywords,
+        uint256 score,
+        uint256 reviewCount,
+        uint256 totalAttested
+    ) {
         require(tools[_toolId].exists, "Tool does not exist");
-        return toolReviews[_toolId];
+        Tool storage t = tools[_toolId];
+        return (
+            t.image,
+            t.repoLink,
+            t.docsLink,
+            t.socials,
+            t.projects,
+            t.keywords,
+            t.score,
+            t.reviewCount,
+            t.totalAttested
+        );
     }
 
     // Get total number of tools
