@@ -82,7 +82,9 @@ export const getAllTools = async () => {
     // or map them to a JS object with all fields.
     const mappedTools = allTools.map(tool => {
       return {
-        id: tool.id.toNumber(),
+        id: Number(tool.id),
+        name: tool.name,
+        description: tool.description,
         image: tool.image,
         repoLink: tool.repoLink,
         docsLink: tool.docsLink,
@@ -96,9 +98,9 @@ export const getAllTools = async () => {
           repoUrl: p.repoUrl
         })),
         keywords: tool.keywords,
-        score: tool.score.toNumber(),
-        reviewCount: tool.reviewCount.toNumber(),
-        totalAttested: tool.totalAttested.toNumber(),
+        score: Number(tool.score),
+        reviewCount: Number(tool.reviewCount),
+        totalAttested: Number(tool.totalAttested),
         exists: tool.exists,
         // owner: owner // Contract-level owner
       };

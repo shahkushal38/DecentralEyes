@@ -15,7 +15,7 @@ const DisplayCampaigns = ({ title }) => {
 
   const handleNavigate = (tool) => {
     // Navigate to details page with the full tool data
-    navigate(`/campaign-details/${tool.id}`, { state: tool });
+    navigate(`/campaign-details/${Number(tool.id)}`, { state: tool });
   };
 
   useEffect(() => {
@@ -48,12 +48,12 @@ const DisplayCampaigns = ({ title }) => {
 
         {!isLoading && tools?.length > 0 && tools.map((tool) => (
           <FundCard 
-            key={tool.id}
-            id={tool.id}
+            key={Number(tool.id)}
+            id={Number(tool.id)}
             name={tool.name}
             description={tool.description}
             image={tool.image}
-            score={tool.score}
+            score={Number(tool.score)}
             handleClick={() => handleNavigate(tool)}
           />
         ))}

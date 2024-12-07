@@ -10,6 +10,8 @@ const CampaignDetails = () => {
 
   // If the tool doesn't exist in state, you might want to handle that gracefully
   if (!state || !state.id) {
+    console.log('state', state);
+    console.error('Tool not found');
     return (
       <div className="text-white p-4">
         <h1>Tool not found</h1>
@@ -19,6 +21,8 @@ const CampaignDetails = () => {
 
   const {
     id,
+    name,
+    description,
     image,
     repoLink,
     docsLink,
