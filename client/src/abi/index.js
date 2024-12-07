@@ -1,5 +1,7 @@
 import { ethers } from "ethers";
-import { contractABI, contractAddress } from "./contractConfig";
+import contractABI from "./DecentralEyesAbi.json"
+
+const contractAddress = "0x35731A7cb0e685FAe5279fcae3699aa85c1f5b2f";
 
 export const getContract = async () => {
   if (!window.ethereum) {

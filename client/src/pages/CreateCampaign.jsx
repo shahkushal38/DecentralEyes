@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { Send, User, Bot, RefreshCw } from 'lucide-react'
+import { getAllTools } from "../abi/index"
 
 const ContainedChatbot = () => {
   const [messages, setMessages] = useState([
@@ -11,6 +12,18 @@ const ContainedChatbot = () => {
   ]);
   const [inputMessage, setInputMessage] = useState('');
   const messagesEndRef = useRef(null);
+
+
+  const fetchCampaigns = async () => {
+    const allTools = await getAllTools()
+    console.log("all tools are:", allTools);
+  }
+
+  useEffect(() => {
+    console.log("rendered use effect");
+    fetchCampaigns();
+  }, []);
+
 
   // Scroll to bottom when messages update
   const scrollToBottom = () => {
