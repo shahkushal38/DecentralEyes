@@ -35,3 +35,9 @@ module.exports = {
     },
 };
 
+
+// Base Sepolia deployment addresses
+
+// toolRegistry - 0x6DC209410F004F092b8e9388D2ac2a19Fa9b6970
+// userVerification - 0x2cf9d50207431a1b192173AAacc4Fcc315bD51B1
+// ReviewManager - 0x649A5dD5fd26174eF1693CC7523C1023Eb93F9e7
