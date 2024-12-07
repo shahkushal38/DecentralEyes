@@ -125,7 +125,7 @@ export const getReviewsForTool = async (toolId) => {
       userName: 'Anonymous',
       userLogo: '/api/placeholder/30/30',
       text: review.comment,
-      rating: Number(review.score)/2, // convert from 1-10 to 1-5 if desired
+      rating: Number(review.score), // convert from 1-10 to 1-5 if desired
       githubLink: review.projectLink,
       attestation: review.isAttested ? 'Verified' : 'Not Verified',
       projectsBuilt: []
