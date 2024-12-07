@@ -8,10 +8,11 @@ const sampleTools = [
   {
     id: 1,
     title: "Hardhat",
-    description: "Ethereum development environment for professionals",
+    description: "lorem ipsum",
     image: "/api/placeholder/288/158",
     rating: 4.8,
     owner: "Nomic Labs",
+    link:"www.xample.com",
     proofOfConcept: {
       description: "Complete development and testing environment",
       githubLink: "https://github.com/NomicFoundation/hardhat",
