@@ -2,7 +2,7 @@ import axios from 'axios';
 // GitHub API URL
 const GITHUB_API_URL = 'https://api.github.com/search/repositories';
 
-const GITHUB_TOKEN = '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';
+const GITHUB_TOKEN = 'YOUR_TOKEN';
 
 // Function to check if a word is present in a user's repositories
 export const findWordInGitHub = async (username, word) => {
