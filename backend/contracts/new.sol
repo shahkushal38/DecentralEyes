@@ -65,11 +65,12 @@ contract ToolReviewManager {
      * @param _repoLink The repository link for the tool.
      * @param _docsLink The documentation link for the tool.
      * @param _keywords The keywords for filtering this tool.
-     * @param _socials Social links and associated projects (passed as encoded data or done in multiple calls for simplicity).
+     * param _socials Social links and associated projects (passed as encoded data or done in multiple calls for simplicity).
      *
      * For simplicity in this example, the socials and projects might need multiple transactions or a more complex input method.
      * We will show a simple approach that allows adding socials separately.
      */
+
     function addTool(
         string memory _image,
         string memory _repoLink,
@@ -113,14 +114,14 @@ contract ToolReviewManager {
         string[] memory _repoUrls
     ) external onlyOwner {
         require(tools[_toolId].exists, "Tool does not exist");
-        require(
-            _creatorIds.length == _creatorGithubProfiles.length && 
-            _creatorIds.length == _repoUrls.length,
-            "Arrays length mismatch"
-        );
+        // require(
+        //     _creatorIds.length == _creatorGithubProfiles.length && 
+        //     _creatorIds.length == _repoUrls.length,
+        //     "Arrays length mismatch"
+        // );
 
         Tool storage t = tools[_toolId];
-        Social memory s;
+        Social storage s = t.socials.push();
         s.socialType = _socialType;
         s.url = _url;
 
@@ -156,19 +157,27 @@ contract ToolReviewManager {
         uint8 _score,
         string memory _comment,
         string[] memory _reviewKeywords
-    ) external onlyVerifiedUser {
+    ) external {
         require(tools[_toolId].exists, "Tool does not exist");
-        require(_score >= 1 && _score <= 10, "Score must be 1-10");
+        require(_score >= 0 && _score <= 10, "Score must be 0-10");
 
         Review memory r;
         r.reviewer = msg.sender;
         r.score = _score;
         r.comment = _comment;
-        for (uint256 i = 0; i < _reviewKeywords.length; i++) {
-            r.reviewKeywords.push(_reviewKeywords[i]);
-        }
+            // Copy keywords to a temporary array in memory
+    string[] memory tempKeywords = new string[](_reviewKeywords.length);
+    for (uint256 i = 0; i < _reviewKeywords.length; i++) {
+        tempKeywords[i] = _reviewKeywords[i];
+    }
 
-        toolReviews[_toolId].push(r);
+    // Push the review into the storage array
+    toolReviews[_toolId].push(Review({
+        reviewer: r.reviewer,
+        score: r.score,
+        comment: r.comment,
+        reviewKeywords: tempKeywords
+    }));
 
         emit ReviewSubmitted(_toolId, msg.sender, _score);
     }
