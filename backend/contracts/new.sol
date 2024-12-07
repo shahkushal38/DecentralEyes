@@ -150,6 +150,12 @@ contract ToolReviewManager {
         emit ReviewSubmitted(_toolId, msg.sender, _score);
     }
 
+    // Get all reviews for a specific tool
+    function getAllReviewsForTool(uint256 _toolId) external view returns (Review[] memory) {
+        require(tools[_toolId].exists, "Tool does not exist");
+        return toolReviews[_toolId];
+    }
+
     // Get all tools with all details
     function listAllTools() external view returns (Tool[] memory) {
         Tool[] memory allTools = new Tool[](toolCount);
