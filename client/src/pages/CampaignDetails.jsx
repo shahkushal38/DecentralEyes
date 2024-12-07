@@ -36,8 +36,8 @@ const CampaignDetails = () => {
 
         <div className="flex md:w-[150px] w-full flex-wrap justify-between gap-[30px]">
           <CountBox title="Rating" value={`${state.rating}/5.0`} />
-          <CountBox title="Total Projects" value={state.totalProjects} />
           <CountBox title="Smart Contracts" value={state.smartContracts?.length || 0} />
+          <CountBox title="Review Count" value={state.reviews?.length || 0} />
         </div>
       </div>
 

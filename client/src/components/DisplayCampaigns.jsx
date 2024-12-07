@@ -39,7 +39,7 @@ const sampleTools = [
         userLogo: "/api/placeholder/30/30",
         text: "Best tool for Ethereum development",
         rating: 5.0,
-        attestation: "0xabc...123", // Ethereum Attestation Service ID
+        attestation: "0xabc1111111111111111111111123", // Ethereum Attestation Service ID
         projectsBuilt: ["DeFi Protocol", "NFT Platform"]
       },
       {
@@ -48,7 +48,7 @@ const sampleTools = [
         userLogo: "/api/placeholder/30/30",
         text: "Excellent testing capabilities",
         rating: 4.7,
-        attestation: "0xdef...456",
+        attestation: "0xdef11111111111111111456",
         projectsBuilt: ["DEX", "Lending Protocol"]
       }
     ]
