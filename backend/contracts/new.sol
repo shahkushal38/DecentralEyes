@@ -84,8 +84,7 @@ contract ToolReviewManager {
             t.socials.push(_socials[i]);
         }
 
-        t.projects = new Project Initialize projects as an empty array
-        t.keywords = new string ; // Initialize keywords as empty
+        // Dynamic arrays are automatically initialized as empty
         t.score = 0;                 // Default score is 0
         t.reviewCount = 0;
         t.exists = true;
