@@ -1,17 +1,6 @@
-// import axios from 'axios';
 const axios = require('axios');
-// import dotenv from 'dotenv';
 const dotenv = require('dotenv');
-// import axios from 'axios';
-// import path from 'path';
 const path = require('path');
-
-// // import { fileURLToPath } from 'url';
-// const fileURLToPath = require()
-
-// // Simulate __dirname
-// const __filename = fileURLToPath(import.meta.url);
-// const __dirname = path.dirname(__filename);
 
 // Load the .env file from the backend folder
 dotenv.config({ path: path.resolve(__dirname, '../.env') });

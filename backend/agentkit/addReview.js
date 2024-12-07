@@ -1,16 +1,8 @@
 const generateTags = require('./generateTag.js');
 const dotenv = require('dotenv');
-// import  from 'dotenv';
-// import axios from 'axios';
 const path = require('path');
 const axios = require('axios');
-// import path from 'path';
-// import { fileURLToPath } from 'url';
 const fileURLToPath = require('url');
-
-// Simulate __dirname
-// const __filename = fileURLToPath(import.meta.url);
-// const __dirname = path.dirname(__filename);
 
 // Load the .env file from the backend folder
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
