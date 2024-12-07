@@ -12,7 +12,8 @@ export const getContract = async () => {
   const provider = new ethers.providers.Web3Provider(window.ethereum);
   const signer = provider.getSigner();
   const contract = new ethers.Contract(contractAddress, contractABI, signer);
-
+  console.log("🚀 ~ getContract ~ contract:", contract)
+  
   return contract;
 };
 
@@ -48,12 +49,44 @@ export const addTool = async (image, repoLink, docsLink, socials) => {
   
   export const getAllTools = async () => {
     try {
+      console.log("Fetching tools...");
       const contract = await getContract();
-      if (!contract) return;
+      if (!contract) return [];
+
+      console.log("🚀 ~ getAllTools ~ contract:", contract )
+      const allTools = await contract.listAllTools();
+      console.log("🚀 ~ getAllTools ~ allTools:", allTools)
+      const owner = await contract.owner();
+      console.log("🚀 ~ getAllTools ~ owner:", owner)
   
-      const tools = await contract.listAllTools();
-      console.log("Fetched tools:", tools);
-      return tools;
+      // allTools is an array of Tool structs; we can return them directly
+      // or map them to a JS object with all fields.
+      const mappedTools = allTools.map(tool => {
+        return {
+          id: tool.id.toNumber(),
+          image: tool.image,
+          repoLink: tool.repoLink,
+          docsLink: tool.docsLink,
+          socials: tool.socials.map(s => ({
+            socialType: s.socialType,
+            url: s.url
+          })),
+          projects: tool.projects.map(p => ({
+            creatorId: p.creatorId,
+            creatorGithubProfile: p.creatorGithubProfile,
+            repoUrl: p.repoUrl
+          })),
+          keywords: tool.keywords,
+          score: tool.score.toNumber(),
+          reviewCount: tool.reviewCount.toNumber(),
+          totalAttested: tool.totalAttested.toNumber(),
+          exists: tool.exists,
+          // owner: owner // Contract-level owner
+        };
+      });
+  
+      console.log("Fetched tools:", mappedTools);
+      return mappedTools;
     } catch (error) {
       console.error("Error fetching tools:", error);
       return [];
@@ -64,11 +97,20 @@ export const addTool = async (image, repoLink, docsLink, socials) => {
   export const getReviewsForTool = async (toolId) => {
     try {
       const contract = await getContract();
-      if (!contract) return;
-  
       const reviews = await contract.getAllReviewsForTool(toolId);
-      console.log("Fetched reviews:", reviews);
-      return reviews;
+      // Map reviews to desired format if needed
+      const mappedReviews = reviews.map((review) => ({
+        userId: review.reviewer,
+        userName: 'Anonymous',
+        userLogo: '/api/placeholder/30/30',
+        text: review.comment,
+        rating: Number(review.score)/2, // convert from 1-10 to 1-5 if desired
+        githubLink: review.projectLink,
+        attestation: review.isAttested ? 'Verified' : 'Not Verified',
+        projectsBuilt: []
+      }));
+  
+      return mappedReviews;
     } catch (error) {
       console.error("Error fetching reviews:", error);
       return [];
