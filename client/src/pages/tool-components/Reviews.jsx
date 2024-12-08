@@ -1,11 +1,14 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { CustomButton } from '../../components';
 import VerificationModal from '../tool-components/ansmodal';
 import { createAttestion } from '../../eas/easCreate';
+import { getAttestation } from '../../eas/getAttestation';
+import { Link } from 'react-router-dom';
 
-const Reviews = ({ reviews, address }) => {
+const Reviews = ({ reviews: reviewsFromProps, address }) => {
   const [showReviewForm, setShowReviewForm] = useState(false);
   const [showVerificationModal, setShowVerificationModal] = useState(false);
+  const [reviews, setReviews] = useState(reviewsFromProps);
   const [reviewToVerify, setReviewToVerify] = useState(null);
 
   const [newReview, setNewReview] = useState({
@@ -16,18 +19,13 @@ const Reviews = ({ reviews, address }) => {
 
   const verificationSteps = [
     {
-      title: 'Content Review',
-      description: 'Analyzing review authenticity',
-      icon: null,
-    },
-    {
-      title: 'GitHub Verification',
-      description: 'Validating GitHub profile',
+      title: 'Review Attestation',
+      description: 'AI Based validation of Review',
       icon: null,
     },
     {
       title: 'Final Approval',
-      description: 'Review approved for submission',
+      description: 'Complete transaction for Review Submission',
       icon: null,
     },
   ];
@@ -40,8 +38,8 @@ const Reviews = ({ reviews, address }) => {
     }
 
     const ratingNum = parseFloat(newReview.rating);
-    if (isNaN(ratingNum) || ratingNum < 0 || ratingNum > 5) {
-      alert('Please enter a valid rating between 0 and 5');
+    if (isNaN(ratingNum) || ratingNum < 0 || ratingNum > 10) {
+      alert('Please enter a valid rating between 0 and 10');
       return;
     }
 
@@ -55,23 +53,14 @@ const Reviews = ({ reviews, address }) => {
 
     const reviewToAdd = {
       address: address || '0x000...000',
-      toolName: 'node',
-      userName: 'Anonymous',
-      githubURL: 'https://github.com/shahkushal38/DecentralEyes',
+      toolName: 'Node',
+      githubURL: newReview.githubLink,
       text: newReview.text,
       rating: newReview.rating,
     };
 
-    console.log('Review to add', reviewToAdd);
     setReviewToVerify(reviewToAdd);
     setShowVerificationModal(true);
-
-    const res = await createAttestion(reviewToAdd, signer);
-    console.log('Response - ', res);
-
-    // Reset form
-    setNewReview({ text: '', rating: '', githubLink: '' });
-    setShowReviewForm(false);
   };
 
   const handleSaveReview = (review) => {
@@ -90,12 +79,30 @@ const Reviews = ({ reviews, address }) => {
     }
   };
 
+  const handleCLoseVerificationModal = useCallback((transaction) => {
+    console.log('Transaction - ', transaction);
+
+    setReviews((curr) => [reviewToVerify, ...curr]); //based on transaction
+    setShowVerificationModal(false);
+    setNewReview({ text: '', rating: '', githubLink: '' });
+    setShowReviewForm(false);
+  });
+
+  const handleGetAttestation = useCallback(async (ev, attestUID) => {
+    ev.preventDefault();
+    const attestation = await getAttestation(attestUID);
+
+    if (attestation) {
+      console.log('attestation-', attestation);
+    }
+  }, []);
+
   return (
     <div className="bg-[#1c1c24] p-6 rounded-[10px]">
       <VerificationModal
         isOpen={showVerificationModal}
-        onClose={() => setShowVerificationModal(false)}
-        onSave={handleSaveReview}
+        onClose={handleCLoseVerificationModal}
+        // onSave={handleSaveReview}
         verificationSteps={verificationSteps}
         reviewData={reviewToVerify}
       />
@@ -207,12 +214,18 @@ const Reviews = ({ reviews, address }) => {
                   </span>
                   <span
                     className={`px-2 py-1 rounded-full text-[12px] ${
-                      review.attestation === 'Verified'
+                      review.attestation
                         ? 'bg-[#4acd8d] text-white'
                         : 'bg-[#3a3a43] text-[#808191]'
                     }`}
                   >
-                    {review.attestation}
+                    <Link
+                      onClick={(ev) =>
+                        handleGetAttestation(ev, review.attestation)
+                      }
+                    >
+                      {review.attestation}
+                    </Link>
                   </span>
                 </div>
               </div>

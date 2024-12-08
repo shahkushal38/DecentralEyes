@@ -26,7 +26,11 @@ const FundCard = ({
         {name}
       </h3>
 
-      <p className="font-epilogue text-[14px] text-[#818183] mt-2">
+      <p className="font-epilogue text-[14px] text-[#818183] mt-2" style={
+        {
+          height: '60px',
+        }
+      }>
         {description}
       </p>
 

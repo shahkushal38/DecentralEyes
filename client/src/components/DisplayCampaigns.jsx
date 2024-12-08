@@ -14,30 +14,32 @@ const DisplayCampaigns = ({ title }) => {
 
   const handleNavigate = (tool) => {
     // Navigate to details page with the full tool data
-    console.log('state', tool.score);
+    console.log('state', tool.projects);
 
-    navigate(`/campaign-details/1`, { state: {
-      id: Number(tool.id),
-      name: tool.name,
-      description: tool.description,
-      image: tool.image,
-      repoLink: tool.repoLink,
-      docsLink: tool.docsLink,
-      socials: tool.socials.map(s => ({
-        socialType: s.socialType,
-        url: s.url
-      })),
-      projects: tool.projects.map(p => ({
-        name: p.name,
-        link: p.link
-      })),
-      keywords: Object.values(tool.keywords),
-      score: Number(tool.score),
-      reviewCount: Number(tool.reviewCount),
-      totalAttested: Number(tool.totalAttested),
-      exists: tool.exists,
-      owner: tool.owner
-    } });
+    navigate(`/campaign-details/1`, {
+      state: {
+        id: Number(tool.id),
+        name: tool.name,
+        description: tool.description,
+        image: tool.image,
+        repoLink: tool.repoLink,
+        docsLink: tool.docsLink,
+        socials: tool.socials.map((s) => ({
+          socialType: s.socialType,
+          url: s.url,
+        })),
+        projects: tool.projects.map((p) => ({
+          name: p.repoUrl,
+          link: p.repoUrl,
+        })),
+        keywords: Object.values(tool.keywords),
+        score: Number(tool.score),
+        reviewCount: Number(tool.reviewCount),
+        totalAttested: Number(tool.totalAttested),
+        exists: tool.exists,
+        owner: tool.owner,
+      },
+    });
   };
 
   useEffect(() => {
@@ -56,8 +58,15 @@ const DisplayCampaigns = ({ title }) => {
       <h1 className="font-epilogue font-semibold text-[18px] text-white text-left">
         {title} ({tools.length})
       </h1>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-[20px]">
+      <div
+        className=" gap-6 mt-[20px]"
+        style={{
+          display: 'flex',
+          flexDirection: 'row',
+          flexWrap: 'wrap',
+          height: 'auto',
+        }}
+      >
         {isLoading && (
           <img
             src={loader}
