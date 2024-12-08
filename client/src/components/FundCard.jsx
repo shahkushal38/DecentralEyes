@@ -32,17 +32,17 @@ const FundCard = ({
 
       {/* Rating Section */}
       <div className="mt-4">
-        <div className="flex items-center justify-between mb-2">
+        {rating && <div className="flex items-center justify-between mb-2">
           <span className="text-[14px] text-white font-semibold">
             Rating: {rating}/10
           </span>
-        </div>
-        <div className="w-full bg-[#2c2c35] rounded-full h-2.5">
+        </div>}
+        {rating && <div className="w-full bg-[#2c2c35] rounded-full h-2.5">
           <div 
             className="bg-blue-600 h-2.5 rounded-full" 
             style={{ width: `${(rating/10)*100}%` }}
           ></div>
-        </div>
+        </div>}
       </div>
     </div>
   )

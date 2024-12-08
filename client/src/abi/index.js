@@ -37,20 +37,25 @@ export const getContract = async () => {
   return contract;
 };
 
-export const addTool = async (image, repoLink, docsLink, socials) => {
-  try {
-    const contract = await getContract();
-    if (!contract) return;
-
-    const tx = await contract.addTool(image, repoLink, docsLink, socials);
-    console.log("Transaction submitted:", tx.hash);
-    await tx.wait();
-    console.log("Transaction confirmed!");
-  } catch (error) {
-    console.error("Error adding tool:", error);
-  }
-};
-
+export const addTool = async (name, description, image, repoLink, docsLink, socials) => {
+    try {
+      const contract = await getContract();
+      if (!contract) return;
+  
+      // Prepare social structure as an array of arrays (each element is [socialType, url])
+      const formattedSocials = socials.map(social => [social.socialType, social.url]);
+  
+      // Call the addTool function on the contract
+      const tx = await contract.addTool(name, description, image, repoLink, docsLink, formattedSocials);
+      console.log("Transaction submitted:", tx.hash);
+      alert("Transaction is successful")
+      await tx.wait();  // Wait for the transaction to be mined
+      console.log("Transaction confirmed!");
+    } catch (error) {
+        alert("Please retry, an error has occurred");
+      console.error("Error adding tool:", error);
+    }
+  };
 
 export const submitReview = async (toolId, score, comment, projectLink, reviewKeywords, nullifierId, isAttested, attestationId) => {
   try {
