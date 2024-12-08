@@ -119,6 +119,7 @@ export const getAllTools = async () => {
   }
 };
 
+import profileLogo from "../assets/profile.svg";
 
 export const getReviewsForTool = async (toolId) => {
   try {
@@ -128,9 +129,9 @@ export const getReviewsForTool = async (toolId) => {
     const mappedReviews = reviews.map((review) => ({
       userId: review.reviewer,
       userName: 'Anonymous',
-      userLogo: '/api/placeholder/30/30',
+      userLogo: profileLogo,
       text: review.comment,
-      rating: Number(review.score), // convert from 1-10 to 1-5 if desired
+      rating: Number(review.score), 
       githubLink: review.projectLink,
       attestation: review.isAttested ? 'Verified' : 'Not Verified',
       projectsBuilt: []

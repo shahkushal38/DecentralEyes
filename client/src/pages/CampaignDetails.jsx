@@ -1,13 +1,29 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
-import { getReviewsForTool } from '../abi';
+import { getReviewsForTool, submitReview } from '../abi'; // Import submitReview from your functions file
 import { loader } from '../assets';
 import { getWalletAddress } from '../context/CoinBaseWallet';
 import { CustomButton, Loader, CountBox } from '../components';
 import profileLogo from "../assets/profile.svg";
-import VerificationModal from '../pages/tool-components/ansmodal'; // adjust the path if needed
-import { createAttestion } from '../eas/easCreate';
+import VerificationModal from '../pages/tool-components/ansmodal'; // adjust if needed
 import { getAttestation } from '../eas/getAttestation';
+import { v4 as uuidv4 } from 'uuid';
+
+// Function to call the /generateTags endpoint
+const generateTagsFromAPI = async (reviewText) => {
+  try {
+    const response = await fetch('http://localhost:3000/generateTags', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: reviewText }),
+    });
+    const data = await response.json();
+    return data; // expects an array of tags
+  } catch (error) {
+    console.error('Error generating tags:', error);
+    return [];
+  }
+};
 
 const CampaignDetails = () => {
   const { state } = useLocation();
@@ -29,7 +45,6 @@ const CampaignDetails = () => {
   const [showVerificationModal, setShowVerificationModal] = useState(false);
   const [reviewToVerify, setReviewToVerify] = useState(null);
 
-  // Steps for the verification modal
   const verificationSteps = [
     {
       title: 'Review Attestation',
@@ -43,7 +58,6 @@ const CampaignDetails = () => {
     },
   ];
 
-  // Ensure the tool exists
   if (!state || !state.id) {
     console.error('Tool not found');
     return (
@@ -69,7 +83,6 @@ const CampaignDetails = () => {
     owner,
   } = state;
 
-  // Fetch reviews from the contract
   useEffect(() => {
     const fetchReviews = async () => {
       setIsLoadingReviews(true);
@@ -95,7 +108,7 @@ const CampaignDetails = () => {
   };
 
   const handleAddReview = async () => {
-    // Validation
+    // Validate input
     if (!newReview.text.trim()) {
       alert('Please enter a review text');
       return;
@@ -123,45 +136,76 @@ const CampaignDetails = () => {
       rating: newReview.rating,
     };
 
-    // Set the review to verify and open the verification modal
+    // Trigger verification modal
     setReviewToVerify(reviewToAdd);
     setShowVerificationModal(true);
   };
 
-  // Called when the verification modal closes after successful attestation
   const handleCloseVerificationModal = useCallback(async (transaction) => {
-    // transaction could be used to verify on-chain submission if needed
     console.log('Transaction - ', transaction);
+    // transaction could contain the attestation UID if attested
+    // Once we have an attestation, we proceed with generating keywords and submitting review on-chain
 
-    // After successful attestation, add the new review to the local state
-    // The attestation might return an attestation UID or something similar, 
-    // you can add that to the review object if needed.
-    if (reviewToVerify) {
+    if (!reviewToVerify) {
+      // If somehow reviewToVerify is missing, just close and reset
+      setShowVerificationModal(false);
+      setNewReview({ text: '', rating: '', githubLink: '' });
+      setShowReviewForm(false);
+      return;
+    }
+
+    // 1. Generate tags from the backend
+    const generatedKeywords = await generateTagsFromAPI(reviewToVerify.text);
+
+    // 2. Determine isAttested and attestationId from transaction
+    const attestationId = transaction?.attestUID || '';
+    const isAttested = attestationId !== '';
+
+    // 3. Generate a random nullifierId
+    const nullifierId = uuidv4();
+
+    // 4. Submit the review to the smart contract
+    try {
+      await submitReview(
+        id,                                   // toolId
+        Math.round(parseFloat(reviewToVerify.rating)),  // score (integer)
+        reviewToVerify.text,                  // comment
+        reviewToVerify.githubURL || '',       // projectLink (githubLink used as project link if provided)
+        generatedKeywords,                    // reviewKeywords
+        nullifierId,                          // nullifierId
+        isAttested,                           // isAttested
+        attestationId                         // attestationId
+      );
+
+      // Add the new review to local state
       const newReviewEntry = {
         userId: reviewToVerify.address,
         githubLink: reviewToVerify.githubURL,
         text: reviewToVerify.text,
-        rating: reviewToVerify.rating,
-        attestation: transaction?.attestUID || '', 
-        // or based on what the transaction returns
-        // and any other fields you want to show
+        rating: parseFloat(reviewToVerify.rating),
+        attestation: isAttested ? 'Verified' : 'Not Verified',
+        userLogo: profileLogo,
+        reviewKeywords: generatedKeywords,
       };
 
       setReviews((curr) => [newReviewEntry, ...curr]);
+    } catch (err) {
+      console.error("Error submitting review to contract:", err);
+      alert("Error submitting review on-chain. Check console for details.");
     }
 
+    // Reset states after completion
     setReviewToVerify(null);
     setShowVerificationModal(false);
     setNewReview({ text: '', rating: '', githubLink: '' });
     setShowReviewForm(false);
-  }, [reviewToVerify]);
+  }, [id, reviewToVerify]);
 
   const handleGetAttestation = useCallback(async (ev, attestUID) => {
     ev.preventDefault();
     const attestation = await getAttestation(attestUID);
     if (attestation) {
       console.log('Attestation:', attestation);
-      // You can show details from the attestation if needed
     }
   }, []);
 
@@ -174,8 +218,6 @@ const CampaignDetails = () => {
         onClose={handleCloseVerificationModal}
         verificationSteps={verificationSteps}
         reviewData={reviewToVerify}
-        // The VerificationModal should internally handle creating attestations via createAttestion,
-        // based on your old logic.
       />
 
       {/* Top Section */}
@@ -277,10 +319,10 @@ const CampaignDetails = () => {
               <div className="mt-[20px] flex flex-col gap-6">
                 {projects.map((project, index) => (
                   <div key={index} className="bg-[#13131a] rounded-[10px] p-4">
-                    {project.link && (
+                    {project.name && (
                       <p className="mt-2 font-epilogue text-[14px] text-[#8c6dfd] hover:underline">
-                        <a href={project.link} target="_blank" rel="noopener noreferrer">
-                          {project.link}
+                        <a href={project.name} target="_blank" rel="noopener noreferrer">
+                          {project.name}
                         </a>
                       </p>
                     )}
@@ -388,7 +430,6 @@ const CampaignDetails = () => {
             {!isLoadingReviews && reviews.length > 0 && (
               <div className="space-y-6">
                 {reviews.map((review, index) => {
-                  // Use rating as is if it's already out of 10
                   const reviewRatingOutOf10 = Number(review.rating);
                   return (
                     <div
@@ -397,7 +438,7 @@ const CampaignDetails = () => {
                     >
                       <div className="flex items-center space-x-4 mb-4">
                         <img
-                          src={profileLogo || '/assets/profile.svg'}
+                          src={review.userLogo || profileLogo}
                           alt="user"
                           className="w-12 h-12 rounded-full object-cover border-2 border-[#8c6dfd]"
                         />
@@ -434,12 +475,12 @@ const CampaignDetails = () => {
                             <span
                               className={
                                 'px-2 py-1 rounded-full text-[12px] ' +
-                                (review.attestation
+                                (review.attestation === 'Verified'
                                   ? 'bg-[#4acd8d] text-white'
                                   : 'bg-[#3a3a43] text-[#808191]')
                               }
                             >
-                              {review.attestation ? (
+                              {review.attestation && review.attestation !== 'Not Verified' ? (
                                 <Link
                                   onClick={(ev) =>
                                     handleGetAttestation(ev, review.attestation)
@@ -448,7 +489,7 @@ const CampaignDetails = () => {
                                   {review.attestation}
                                 </Link>
                               ) : (
-                                'None'
+                                review.attestation
                               )}
                             </span>
                           </div>
