@@ -1,4 +1,5 @@
 const processReview = require('./agentkit/addreview.js');
+const generateTags = require('./agentkit/generateTag.js');
 const express = require('express');
 const bodyParser = require('body-parser'); // To parse JSON request bodies
 const cors = require('cors'); // To enable CORS
@@ -19,6 +20,11 @@ app.get('/', (req, res) => {
 app.post('/processReview', async (req, res) => {
   // await res.send(processReview.processReview(req.body.text));
   const data = await processReview.processReview(req.body.text);
+  res.send(data);
+});
+
+app.post('/generateTags', async (req, res) => {
+  const data = await generateTags.generateTags(req.body.text);
   res.send(data);
 });
 

@@ -6,10 +6,12 @@ import { easInitialize } from './easInitialize';
 import { findWordInGitHub } from './findWordInGithub';
 
 export const createAttestion = async (data) => {
+  console.log("🚀 ~ createAttestion ~ data:", data)
+  const githubUsername = data.githubURL.split('/')[3];
   try {
     const eas = easInitialize();
 
-    const agentVerified = await findWordInGitHub('shahkushal38', data.toolName);
+    const agentVerified = await findWordInGitHub(githubUsername, data.toolName);
 
     // Initialize SchemaEncoder with the schema string
     const schemaEncoder = new SchemaEncoder(

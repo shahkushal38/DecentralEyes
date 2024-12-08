@@ -1,10 +1,14 @@
-import React, { useEffect, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import React, { useEffect, useState, useCallback } from 'react';
+import { useLocation, useNavigate, Link } from 'react-router-dom';
 import { getReviewsForTool } from '../abi';
 import { loader } from '../assets';
 import { getWalletAddress } from '../context/CoinBaseWallet';
-import { CustomButton, Loader, CountBox } from '../components'; // Assuming these exist
+import { CustomButton, Loader, CountBox } from '../components';
 import profileLogo from "../assets/profile.svg";
+import VerificationModal from '../pages/tool-components/ansmodal'; // adjust the path if needed
+import { createAttestion } from '../eas/easCreate';
+import { getAttestation } from '../eas/getAttestation';
+
 const CampaignDetails = () => {
   const { state } = useLocation();
   const navigate = useNavigate();
@@ -12,12 +16,32 @@ const CampaignDetails = () => {
 
   const [reviews, setReviews] = useState([]);
   const [isLoadingReviews, setIsLoadingReviews] = useState(true);
+
+  // For adding a new review
   const [showReviewForm, setShowReviewForm] = useState(false);
   const [newReview, setNewReview] = useState({
     text: '',
     rating: '',
     githubLink: '',
   });
+
+  // Verification & attestation modal logic
+  const [showVerificationModal, setShowVerificationModal] = useState(false);
+  const [reviewToVerify, setReviewToVerify] = useState(null);
+
+  // Steps for the verification modal
+  const verificationSteps = [
+    {
+      title: 'Review Attestation',
+      description: 'AI Based validation of Review',
+      icon: null,
+    },
+    {
+      title: 'Final Approval',
+      description: 'Complete transaction for Review Submission',
+      icon: null,
+    },
+  ];
 
   // Ensure the tool exists
   if (!state || !state.id) {
@@ -70,17 +94,16 @@ const CampaignDetails = () => {
     }
   };
 
-  const handleAddReview = () => {
-    // Just a placeholder for the old form logic
-    // In real scenario, you'd integrate contract calls here
+  const handleAddReview = async () => {
+    // Validation
     if (!newReview.text.trim()) {
       alert('Please enter a review text');
       return;
     }
 
     const ratingNum = parseFloat(newReview.rating);
-    if (isNaN(ratingNum) || ratingNum < 0 || ratingNum > 5) {
-      alert('Please enter a valid rating between 0 and 5');
+    if (isNaN(ratingNum) || ratingNum < 0 || ratingNum > 10) {
+      alert('Please enter a valid rating between 0 and 10');
       return;
     }
 
@@ -92,15 +115,68 @@ const CampaignDetails = () => {
       return;
     }
 
-    // After verification, you'd typically send to the contract
-    // For now, we'll just close the form
+    const reviewToAdd = {
+      address: address || '0x000...000',
+      toolName: name || 'UnknownTool',
+      githubURL: newReview.githubLink,
+      text: newReview.text,
+      rating: newReview.rating,
+    };
+
+    // Set the review to verify and open the verification modal
+    setReviewToVerify(reviewToAdd);
+    setShowVerificationModal(true);
+  };
+
+  // Called when the verification modal closes after successful attestation
+  const handleCloseVerificationModal = useCallback(async (transaction) => {
+    // transaction could be used to verify on-chain submission if needed
+    console.log('Transaction - ', transaction);
+
+    // After successful attestation, add the new review to the local state
+    // The attestation might return an attestation UID or something similar, 
+    // you can add that to the review object if needed.
+    if (reviewToVerify) {
+      const newReviewEntry = {
+        userId: reviewToVerify.address,
+        githubLink: reviewToVerify.githubURL,
+        text: reviewToVerify.text,
+        rating: reviewToVerify.rating,
+        attestation: transaction?.attestUID || '', 
+        // or based on what the transaction returns
+        // and any other fields you want to show
+      };
+
+      setReviews((curr) => [newReviewEntry, ...curr]);
+    }
+
+    setReviewToVerify(null);
+    setShowVerificationModal(false);
     setNewReview({ text: '', rating: '', githubLink: '' });
     setShowReviewForm(false);
-  };
+  }, [reviewToVerify]);
+
+  const handleGetAttestation = useCallback(async (ev, attestUID) => {
+    ev.preventDefault();
+    const attestation = await getAttestation(attestUID);
+    if (attestation) {
+      console.log('Attestation:', attestation);
+      // You can show details from the attestation if needed
+    }
+  }, []);
 
   return (
     <div>
       {isLoadingReviews && <Loader />}
+
+      <VerificationModal
+        isOpen={showVerificationModal}
+        onClose={handleCloseVerificationModal}
+        verificationSteps={verificationSteps}
+        reviewData={reviewToVerify}
+        // The VerificationModal should internally handle creating attestations via createAttestion,
+        // based on your old logic.
+      />
 
       {/* Top Section */}
       <div className="w-full flex md:flex-row flex-col mt-10 gap-[30px]">
@@ -111,7 +187,7 @@ const CampaignDetails = () => {
             className="w-full h-[410px] object-cover rounded-xl"
           />
           <div className="relative w-full h-[5px] bg-[#3a3a43] mt-2">
-            {/* Rating bar based on 5 stars scale */}
+            {/* Rating bar based on 10 scale */}
             <div
               className="absolute h-full bg-[#4acd8d]"
               style={{
@@ -172,7 +248,7 @@ const CampaignDetails = () => {
             </div>
           </div>
 
-          {/* Socials Section (New) */}
+          {/* Socials Section */}
           {socials && socials.length > 0 && (
             <div className="bg-[#1c1c24] p-6 rounded-[10px]">
               <h4 className="font-epilogue font-semibold text-[18px] text-white uppercase">Socials</h4>
@@ -194,7 +270,7 @@ const CampaignDetails = () => {
             </div>
           )}
 
-          {/* Projects Section (New) */}
+          {/* Projects Section */}
           {projects && projects.length > 0 && (
             <div className="bg-[#1c1c24] p-6 rounded-[10px]">
               <h4 className="font-epilogue font-semibold text-[18px] text-white uppercase">Projects</h4>
@@ -214,7 +290,7 @@ const CampaignDetails = () => {
             </div>
           )}
 
-          {/* Keywords Section (New) */}
+          {/* Keywords Section */}
           {keywords && keywords.length > 0 && (
             <div className="bg-[#1c1c24] p-6 rounded-[10px]">
               <h4 className="font-epilogue font-semibold text-[18px] text-white uppercase">Keywords</h4>
@@ -312,7 +388,8 @@ const CampaignDetails = () => {
             {!isLoadingReviews && reviews.length > 0 && (
               <div className="space-y-6">
                 {reviews.map((review, index) => {
-                  const reviewRatingOutOf10 = (Number(review.rating) / 10) * 10;
+                  // Use rating as is if it's already out of 10
+                  const reviewRatingOutOf10 = Number(review.rating);
                   return (
                     <div
                       key={index}
@@ -326,7 +403,7 @@ const CampaignDetails = () => {
                         />
                         <div>
                           <h5 className="font-epilogue font-semibold text-[16px] text-white">
-                            {review.userId}
+                            {review.userId || 'Anonymous'}
                           </h5>
                           {review.githubLink && (
                             <a
@@ -357,12 +434,22 @@ const CampaignDetails = () => {
                             <span
                               className={
                                 'px-2 py-1 rounded-full text-[12px] ' +
-                                (review.attestation === 'Verified'
+                                (review.attestation
                                   ? 'bg-[#4acd8d] text-white'
                                   : 'bg-[#3a3a43] text-[#808191]')
                               }
                             >
-                              {review.attestation}
+                              {review.attestation ? (
+                                <Link
+                                  onClick={(ev) =>
+                                    handleGetAttestation(ev, review.attestation)
+                                  }
+                                >
+                                  {review.attestation}
+                                </Link>
+                              ) : (
+                                'None'
+                              )}
                             </span>
                           </div>
                         </div>
