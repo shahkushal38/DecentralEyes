@@ -1,68 +1,57 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import { v4 as uuidv4 } from 'uuid';
+// DisplayCampaigns.jsx
+import React, { useEffect, useState } from 'react';
+// import { useNavigation } from 'react-router-dom';
 import FundCard from './FundCard';
 import { loader } from '../assets';
-
-const sampleTools = [
-  {
-    id: 1,
-    title: 'Hardhat',
-    description: 'lorem ipsum',
-    image: '/api/placeholder/288/158',
-    rating: 4.8,
-    owner: 'Nomic Labs',
-    link: 'www.xample.com',
-    proofOfConcept: {
-      description: 'Complete development and testing environment',
-      githubLink: 'https://github.com/NomicFoundation/hardhat',
-    },
-    smartContracts: [
-      {
-        name: 'HardhatToken',
-        description: 'ERC20 implementation with Hardhat',
-        review: 'Highly secure implementation with comprehensive testing suite',
-        rating: 4.9,
-      },
-      {
-        name: 'NFT Marketplace',
-        description: 'NFT trading platform',
-        review: 'Well-structured with good security practices',
-        rating: 4.7,
-      },
-    ],
-    totalProjects: 15000,
-    reviews: [
-      {
-        userId: '0x123...abc',
-        userName: 'Alex Dev',
-        userLogo: '/api/placeholder/30/30',
-        text: 'Best tool for Ethereum development',
-        rating: 5.0,
-        attestation:
-          '0x01fb235e752e345d307344c1585f39b43eb7e480e484c2f0eebdd009867de725', // Ethereum Attestation Service ID
-        projectsBuilt: ['DeFi Protocol', 'NFT Platform'],
-      },
-      {
-        userId: '0x456...def',
-        userName: 'Sarah Chain',
-        userLogo: '/api/placeholder/30/30',
-        text: 'Excellent testing capabilities',
-        rating: 4.7,
-        attestation: '0xdef11111111111111111456',
-        projectsBuilt: ['DEX', 'Lending Protocol'],
-      },
-    ],
-  },
-  // ... (other sample tools remain the same)
-];
-
-const DisplayCampaigns = ({ title, isLoading, tools = sampleTools }) => {
+import { getAllTools } from '../abi/index';
+import { getWalletAddress } from '../context/CoinBaseWallet';
+import { useNavigate } from 'react-router-dom';
+const DisplayCampaigns = ({ title }) => {
+  const address = getWalletAddress();
   const navigate = useNavigate();
+  const [tools, setTools] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   const handleNavigate = (tool) => {
-    navigate(`/campaign-details/${tool.title}`, { state: tool });
+    // Navigate to details page with the full tool data
+    console.log('state', tool.score);
+
+    navigate(`/campaign-details/1`, {
+      state: {
+        id: Number(tool.id),
+        name: tool.name,
+        description: tool.description,
+        image: tool.image,
+        repoLink: tool.repoLink,
+        docsLink: tool.docsLink,
+        socials: tool.socials.map((s) => ({
+          socialType: s.socialType,
+          url: s.url,
+        })),
+        projects: tool.projects.map((p) => ({
+          name: p.name,
+          link: p.link,
+        })),
+        keywords: Object.values(tool.keywords),
+        score: Number(tool.score),
+        reviewCount: Number(tool.reviewCount),
+        totalAttested: Number(tool.totalAttested),
+        exists: tool.exists,
+        owner: tool.owner,
+      },
+    });
   };
+
+  useEffect(() => {
+    const fetchTools = async () => {
+      setIsLoading(true);
+      const fetchedTools = await getAllTools();
+      setTools(fetchedTools);
+      setIsLoading(false);
+    };
+
+    fetchTools();
+  }, []);
 
   return (
     <div>
@@ -89,8 +78,12 @@ const DisplayCampaigns = ({ title, isLoading, tools = sampleTools }) => {
           tools.length > 0 &&
           tools.map((tool) => (
             <FundCard
-              key={uuidv4()}
-              {...tool}
+              key={Number(tool.id)}
+              id={Number(tool.id)}
+              name={tool.name}
+              description={tool.description}
+              image={tool.image}
+              score={Number(tool.score)}
               handleClick={() => handleNavigate(tool)}
             />
           ))}

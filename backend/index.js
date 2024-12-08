@@ -1,4 +1,4 @@
-// Import required modules
+const processReview = require('./agentkit/addreview.js');
 const express = require('express');
 const bodyParser = require('body-parser'); // To parse JSON request bodies
 const cors = require('cors'); // To enable CORS
@@ -14,6 +14,12 @@ app.use(bodyParser.urlencoded({ extended: true })); // Parse URL-encoded bodies
 // Define a default route
 app.get('/', (req, res) => {
   res.send('Welcome to the Express.js application!');
+});
+
+app.post('/processReview', async (req, res) => {
+  // await res.send(processReview.processReview(req.body.text));
+  const data = await processReview.processReview(req.body.text);
+  res.send(data);
 });
 
 // Start the server
