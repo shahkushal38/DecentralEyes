@@ -2,9 +2,9 @@ import axios from 'axios';
 
 // Use environment variables for API URL and token
 const GITHUB_API_URL =
-  process.env.REACT_APP_GITHUB_API_URL ||
+  import.meta.env.VITE_GITHUB_API_URL ??
   'https://api.github.com/search/repositories';
-const GITHUB_TOKEN = process.env.REACT_APP_GITHUB_TOKEN;
+const GITHUB_TOKEN = import.meta.env.VITE_GITHUB_TOKEN;
 
 // Function to check if a word is present in a user's repositories
 export const findWordInGitHub = async (username, word) => {

@@ -16,8 +16,6 @@ const CampaignDetails = () => {
   const navigate = useNavigate();
   const address = getWalletAddress();
 
-  console.log('Address - ', address);
-
   const [isLoading, setIsLoading] = useState(false);
   const [reviews, setReviews] = useState(state.reviews || []);
 
