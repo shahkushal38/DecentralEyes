@@ -36,25 +36,42 @@ export const getContract = async () => {
   return contract;
 };
 
-export const addTool = async (name, description, image, repoLink, docsLink, socials) => {
-    try {
-      const contract = await getContract();
-      if (!contract) return;
-  
-      // Prepare social structure as an array of arrays (each element is [socialType, url])
-      const formattedSocials = socials.map(social => [social.socialType, social.url]);
-  
-      // Call the addTool function on the contract
-      const tx = await contract.addTool(name, description, image, repoLink, docsLink, formattedSocials);
-      console.log('Transaction submitted:', tx.hash);
-      alert("Transaction is successful")
-      await tx.wait();  // Wait for the transaction to be mined
-      console.log('Transaction confirmed!');
-    } catch (error) {
-        alert("Please retry, an error has occurred");
-      console.error('Error adding tool:', error);
-    }
-  };
+export const addTool = async (
+  name,
+  description,
+  image,
+  repoLink,
+  docsLink,
+  socials
+) => {
+  try {
+    const contract = await getContract();
+    if (!contract) return;
+
+    // Prepare social structure as an array of arrays (each element is [socialType, url])
+    const formattedSocials = socials.map((social) => [
+      social.socialType,
+      social.url,
+    ]);
+
+    // Call the addTool function on the contract
+    const tx = await contract.addTool(
+      name,
+      description,
+      image,
+      repoLink,
+      docsLink,
+      formattedSocials
+    );
+    console.log('Transaction submitted:', tx.hash);
+    alert('Transaction is successful');
+    await tx.wait(); // Wait for the transaction to be mined
+    console.log('Transaction confirmed!');
+  } catch (error) {
+    alert('Please retry, an error has occurred');
+    console.error('Error adding tool:', error);
+  }
+};
 export const submitReview = async (
   toolId,
   score,
@@ -134,7 +151,7 @@ export const getAllTools = async () => {
     return [];
   }
 };
-import profileLogo from "../assets/profile.svg";
+import profileLogo from '../assets/profile.svg';
 
 export const getReviewsForTool = async (toolId) => {
   try {
@@ -146,7 +163,7 @@ export const getReviewsForTool = async (toolId) => {
       userName: 'Anonymous',
       userLogo: profileLogo,
       text: review.comment,
-      rating: Number(review.score), 
+      rating: Number(review.score),
       githubLink: review.projectLink,
       attestation: review.isAttested ? 'Verified' : 'Not Verified',
       projectsBuilt: [],
