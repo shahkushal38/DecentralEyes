@@ -141,8 +141,8 @@ const CampaignDetails = () => {
     setShowVerificationModal(true);
   };
 
-  const handleCloseVerificationModal = useCallback(async (transaction) => {
-    console.log('Transaction - ', transaction);
+  const handleCloseVerificationModal = useCallback(async (attestationId) => {
+    console.log('attestationId - ', attestationId);
     // transaction could contain the attestation UID if attested
     // Once we have an attestation, we proceed with generating keywords and submitting review on-chain
 
@@ -158,8 +158,8 @@ const CampaignDetails = () => {
     const generatedKeywords = await generateTagsFromAPI(reviewToVerify.text);
 
     // 2. Determine isAttested and attestationId from transaction
-    const attestationId = transaction?.attestUID || '';
-    const isAttested = attestationId !== '';
+    const attestationIdRecvd = attestationId || '';
+    const isAttested = attestationIdRecvd !== '';
 
     // 3. Generate a random nullifierId
     const nullifierId = uuidv4();
@@ -199,6 +199,7 @@ const CampaignDetails = () => {
     setShowVerificationModal(false);
     setNewReview({ text: '', rating: '', githubLink: '' });
     setShowReviewForm(false);
+    navigate('/')
   }, [id, reviewToVerify]);
 
   const handleGetAttestation = useCallback(async (ev, attestUID) => {
@@ -233,7 +234,7 @@ const CampaignDetails = () => {
             <div
               className="absolute h-full bg-[#4acd8d]"
               style={{
-                width: `${(ratingOutOf10 / 5) * 100}%`,
+                width: `${(ratingOutOf10 / 10) * 100}%`,
                 maxWidth: '100%',
               }}
             ></div>
