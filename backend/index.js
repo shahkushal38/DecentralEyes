@@ -19,6 +19,7 @@ app.get('/', (req, res) => {
 
 app.post('/processReview', async (req, res) => {
   // await res.send(processReview.processReview(req.body.text));
+  console.log('request.body', req.body);
   const data = await processReview.processReview(req.body.text);
   res.send(data);
 });

@@ -23,12 +23,11 @@ export const getContract = async () => {
     appLogoUrl: APP_LOGO_URL,
     darkMode: false,
   });
-  
 
   // Create a new EIP-1193 provider from Coinbase Wallet SDK
   const ethereum = coinbaseWallet.getProvider(RPC_URL, DEFAULT_CHAIN_ID);
 
-  // 
+  //
   // With ethers v6, use BrowserProvider to wrap the Coinbase provider
   const provider = new ethers.BrowserProvider(ethereum);
   const signer = await provider.getSigner();
@@ -47,45 +46,62 @@ export const addTool = async (name, description, image, repoLink, docsLink, soci
   
       // Call the addTool function on the contract
       const tx = await contract.addTool(name, description, image, repoLink, docsLink, formattedSocials);
-      console.log("Transaction submitted:", tx.hash);
+      console.log('Transaction submitted:', tx.hash);
       alert("Transaction is successful")
       await tx.wait();  // Wait for the transaction to be mined
-      console.log("Transaction confirmed!");
+      console.log('Transaction confirmed!');
     } catch (error) {
         alert("Please retry, an error has occurred");
-      console.error("Error adding tool:", error);
+      console.error('Error adding tool:', error);
     }
   };
-
-export const submitReview = async (toolId, score, comment, projectLink, reviewKeywords, nullifierId, isAttested, attestationId) => {
+export const submitReview = async (
+  toolId,
+  score,
+  comment,
+  projectLink,
+  reviewKeywords,
+  nullifierId,
+  isAttested,
+  attestationId
+) => {
   try {
     const contract = await getContract();
     if (!contract) return;
 
-    const tx = await contract.submitReview(toolId, score, comment, projectLink, reviewKeywords, nullifierId, isAttested, attestationId);
-    console.log("Review submitted:", tx.hash);
+    const tx = await contract.submitReview(
+      toolId,
+      score,
+      comment,
+      projectLink,
+      reviewKeywords,
+      nullifierId,
+      isAttested,
+      attestationId
+    );
+    console.log('Review submitted:', tx.hash);
     await tx.wait();
-    console.log("Review confirmed!");
+    console.log('Review confirmed!');
   } catch (error) {
-    console.error("Error submitting review:", error);
+    console.error('Error submitting review:', error);
   }
 };
 
 export const getAllTools = async () => {
   try {
-    console.log("Fetching tools...");
+    console.log('Fetching tools...');
     const contract = await getContract();
     if (!contract) return [];
 
-    console.log("🚀 ~ getAllTools ~ contract:", contract )
+    console.log('🚀 ~ getAllTools ~ contract:', contract);
     const allTools = await contract.listAllTools();
-    console.log("🚀 ~ getAllTools ~ allTools:", allTools)
+    console.log('🚀 ~ getAllTools ~ allTools:', allTools);
     const owner = await contract.owner();
-    console.log("🚀 ~ getAllTools ~ owner:", owner)
+    console.log('🚀 ~ getAllTools ~ owner:', owner);
 
     // allTools is an array of Tool structs; we can return them directly
     // or map them to a JS object with all fields.
-    const mappedTools = allTools.map(tool => {
+    const mappedTools = allTools.map((tool) => {
       return {
         id: Number(tool.id),
         name: tool.name,
@@ -93,14 +109,14 @@ export const getAllTools = async () => {
         image: tool.image,
         repoLink: tool.repoLink,
         docsLink: tool.docsLink,
-        socials: tool.socials.map(s => ({
+        socials: tool.socials.map((s) => ({
           socialType: s.socialType,
-          url: s.url
+          url: s.url,
         })),
-        projects: tool.projects.map(p => ({
+        projects: tool.projects.map((p) => ({
           creatorId: p.creatorId,
           creatorGithubProfile: p.creatorGithubProfile,
-          repoUrl: p.repoUrl
+          repoUrl: p.repoUrl,
         })),
         keywords: tool.keywords,
         score: Number(tool.score),
@@ -111,14 +127,13 @@ export const getAllTools = async () => {
       };
     });
 
-    console.log("Fetched tools:", mappedTools);
+    console.log('Fetched tools:', mappedTools);
     return mappedTools;
   } catch (error) {
-    console.error("Error fetching tools:", error);
+    console.error('Error fetching tools:', error);
     return [];
   }
 };
-
 import profileLogo from "../assets/profile.svg";
 
 export const getReviewsForTool = async (toolId) => {
@@ -134,12 +149,12 @@ export const getReviewsForTool = async (toolId) => {
       rating: Number(review.score), 
       githubLink: review.projectLink,
       attestation: review.isAttested ? 'Verified' : 'Not Verified',
-      projectsBuilt: []
+      projectsBuilt: [],
     }));
 
     return mappedReviews;
   } catch (error) {
-    console.error("Error fetching reviews:", error);
+    console.error('Error fetching reviews:', error);
     return [];
   }
 };
