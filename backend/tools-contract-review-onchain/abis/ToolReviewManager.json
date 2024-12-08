@@ -1,0 +1,290 @@
+[
+  { "inputs": [], "stateMutability": "nonpayable", "type": "constructor" },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "toolId",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "reviewer",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "score",
+        "type": "uint256"
+      }
+    ],
+    "name": "ReviewSubmitted",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "toolId",
+        "type": "uint256"
+      }
+    ],
+    "name": "ToolAdded",
+    "type": "event"
+  },
+  {
+    "inputs": [
+      { "internalType": "string", "name": "_image", "type": "string" },
+      { "internalType": "string", "name": "_repoLink", "type": "string" },
+      { "internalType": "string", "name": "_docsLink", "type": "string" },
+      {
+        "components": [
+          { "internalType": "string", "name": "socialType", "type": "string" },
+          { "internalType": "string", "name": "url", "type": "string" }
+        ],
+        "internalType": "struct ToolReviewManager.Social[]",
+        "name": "_socials",
+        "type": "tuple[]"
+      }
+    ],
+    "name": "addTool",
+    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "uint256", "name": "_toolId", "type": "uint256" }
+    ],
+    "name": "getAllReviewsForTool",
+    "outputs": [
+      {
+        "components": [
+          { "internalType": "address", "name": "reviewer", "type": "address" },
+          { "internalType": "string", "name": "nullifierId", "type": "string" },
+          { "internalType": "bool", "name": "isAttested", "type": "bool" },
+          {
+            "internalType": "string",
+            "name": "attestationId",
+            "type": "string"
+          },
+          { "internalType": "uint256", "name": "score", "type": "uint256" },
+          { "internalType": "string", "name": "comment", "type": "string" },
+          { "internalType": "string", "name": "projectLink", "type": "string" },
+          {
+            "internalType": "string[]",
+            "name": "reviewKeywords",
+            "type": "string[]"
+          }
+        ],
+        "internalType": "struct ToolReviewManager.Review[]",
+        "name": "",
+        "type": "tuple[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "uint256", "name": "_toolId", "type": "uint256" }
+    ],
+    "name": "getToolInfo",
+    "outputs": [
+      { "internalType": "string", "name": "image", "type": "string" },
+      { "internalType": "string", "name": "repoLink", "type": "string" },
+      { "internalType": "string", "name": "docsLink", "type": "string" },
+      {
+        "components": [
+          { "internalType": "string", "name": "socialType", "type": "string" },
+          { "internalType": "string", "name": "url", "type": "string" }
+        ],
+        "internalType": "struct ToolReviewManager.Social[]",
+        "name": "socials",
+        "type": "tuple[]"
+      },
+      {
+        "components": [
+          { "internalType": "string", "name": "creatorId", "type": "string" },
+          {
+            "internalType": "string",
+            "name": "creatorGithubProfile",
+            "type": "string"
+          },
+          { "internalType": "string", "name": "repoUrl", "type": "string" }
+        ],
+        "internalType": "struct ToolReviewManager.Project[]",
+        "name": "projects",
+        "type": "tuple[]"
+      },
+      { "internalType": "string[]", "name": "keywords", "type": "string[]" },
+      { "internalType": "uint256", "name": "score", "type": "uint256" },
+      { "internalType": "uint256", "name": "reviewCount", "type": "uint256" },
+      { "internalType": "uint256", "name": "totalAttested", "type": "uint256" }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getTotalReviewCount",
+    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getTotalToolCount",
+    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "listAllTools",
+    "outputs": [
+      {
+        "components": [
+          { "internalType": "uint256", "name": "id", "type": "uint256" },
+          { "internalType": "string", "name": "image", "type": "string" },
+          { "internalType": "string", "name": "repoLink", "type": "string" },
+          { "internalType": "string", "name": "docsLink", "type": "string" },
+          {
+            "components": [
+              {
+                "internalType": "string",
+                "name": "socialType",
+                "type": "string"
+              },
+              { "internalType": "string", "name": "url", "type": "string" }
+            ],
+            "internalType": "struct ToolReviewManager.Social[]",
+            "name": "socials",
+            "type": "tuple[]"
+          },
+          {
+            "components": [
+              {
+                "internalType": "string",
+                "name": "creatorId",
+                "type": "string"
+              },
+              {
+                "internalType": "string",
+                "name": "creatorGithubProfile",
+                "type": "string"
+              },
+              { "internalType": "string", "name": "repoUrl", "type": "string" }
+            ],
+            "internalType": "struct ToolReviewManager.Project[]",
+            "name": "projects",
+            "type": "tuple[]"
+          },
+          {
+            "internalType": "string[]",
+            "name": "keywords",
+            "type": "string[]"
+          },
+          { "internalType": "uint256", "name": "score", "type": "uint256" },
+          {
+            "internalType": "uint256",
+            "name": "reviewCount",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "totalAttested",
+            "type": "uint256"
+          },
+          { "internalType": "bool", "name": "exists", "type": "bool" }
+        ],
+        "internalType": "struct ToolReviewManager.Tool[]",
+        "name": "",
+        "type": "tuple[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "owner",
+    "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "uint256", "name": "_toolId", "type": "uint256" },
+      { "internalType": "uint256", "name": "_score", "type": "uint256" },
+      { "internalType": "string", "name": "_comment", "type": "string" },
+      { "internalType": "string", "name": "_projectLink", "type": "string" },
+      {
+        "internalType": "string[]",
+        "name": "_reviewKeywords",
+        "type": "string[]"
+      },
+      { "internalType": "string", "name": "_nullifierId", "type": "string" },
+      { "internalType": "bool", "name": "_isAttested", "type": "bool" },
+      { "internalType": "string", "name": "_attestationId", "type": "string" }
+    ],
+    "name": "submitReview",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "toolCount",
+    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "uint256", "name": "", "type": "uint256" },
+      { "internalType": "uint256", "name": "", "type": "uint256" }
+    ],
+    "name": "toolReviews",
+    "outputs": [
+      { "internalType": "address", "name": "reviewer", "type": "address" },
+      { "internalType": "string", "name": "nullifierId", "type": "string" },
+      { "internalType": "bool", "name": "isAttested", "type": "bool" },
+      { "internalType": "string", "name": "attestationId", "type": "string" },
+      { "internalType": "uint256", "name": "score", "type": "uint256" },
+      { "internalType": "string", "name": "comment", "type": "string" },
+      { "internalType": "string", "name": "projectLink", "type": "string" }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "name": "tools",
+    "outputs": [
+      { "internalType": "uint256", "name": "id", "type": "uint256" },
+      { "internalType": "string", "name": "image", "type": "string" },
+      { "internalType": "string", "name": "repoLink", "type": "string" },
+      { "internalType": "string", "name": "docsLink", "type": "string" },
+      { "internalType": "uint256", "name": "score", "type": "uint256" },
+      { "internalType": "uint256", "name": "reviewCount", "type": "uint256" },
+      { "internalType": "uint256", "name": "totalAttested", "type": "uint256" },
+      { "internalType": "bool", "name": "exists", "type": "bool" }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "totalReviews",
+    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "stateMutability": "view",
+    "type": "function"
+  }
+]

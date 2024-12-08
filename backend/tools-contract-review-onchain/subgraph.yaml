@@ -1,0 +1,29 @@
+specVersion: 1.0.0
+indexerHints:
+  prune: auto
+schema:
+  file: ./schema.graphql
+dataSources:
+  - kind: ethereum
+    name: ToolReviewManager
+    network: base-sepolia
+    source:
+      address: "0x35731A7cb0e685FAe5279fcae3699aa85c1f5b2f"
+      abi: ToolReviewManager
+      startBlock: 18908323
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - ReviewSubmitted
+        - ToolAdded
+      abis:
+        - name: ToolReviewManager
+          file: ./abis/ToolReviewManager.json
+      eventHandlers:
+        - event: ReviewSubmitted(uint256,address,uint256)
+          handler: handleReviewSubmitted
+        - event: ToolAdded(uint256)
+          handler: handleToolAdded
+      file: ./src/tool-review-manager.ts

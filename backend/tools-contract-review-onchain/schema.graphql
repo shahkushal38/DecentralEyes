@@ -1,0 +1,17 @@
+type ReviewSubmitted @entity(immutable: true) {
+  id: Bytes!
+  toolId: BigInt! # uint256
+  reviewer: Bytes! # address
+  score: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type ToolAdded @entity(immutable: true) {
+  id: Bytes!
+  toolId: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
